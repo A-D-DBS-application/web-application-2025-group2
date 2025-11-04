@@ -8,4 +8,9 @@ if __name__ == "__main__":
 
 # change test
 #second test
+<<<<<<< Updated upstream
 test
+=======
+#stef test
+
+>>>>>>> Stashed changes
