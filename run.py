@@ -4,13 +4,3 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-# change test
-#second test
-<<<<<<< Updated upstream
-test
-=======
-#stef test
-
->>>>>>> Stashed changes
