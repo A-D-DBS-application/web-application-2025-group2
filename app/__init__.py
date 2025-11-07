@@ -1,3 +1,4 @@
+# app/__init__.py
 from flask import Flask
 from .models import db
 from .config import Config
@@ -9,12 +10,13 @@ def create_app():
     db.init_app(app)
 
     with app.app_context():
-        db.create_all()  # Create sql tables for our data models
+        db.create_all()  # Create SQL tables for our models
 
     from .routes import main
     app.register_blueprint(main)
 
     return app
+
 
 
 
