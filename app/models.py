@@ -120,3 +120,6 @@ class KVStore(db.Model):
     def __repr__(self):
         return f'<KVStore {self.key}>'
 # ...existing code...
+
+
+class...
