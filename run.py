@@ -12,4 +12,7 @@ if __name__ == "__main__":
 #second test
 #stef test
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
