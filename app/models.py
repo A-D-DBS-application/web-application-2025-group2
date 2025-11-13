@@ -10,3 +10,8 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
     
+class Photographer(db.Model):
+    def __init__(self, id, created_at):
+        
+    self.id = id
+    self.created_at = created_at 
