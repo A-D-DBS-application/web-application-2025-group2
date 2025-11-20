@@ -4,18 +4,4 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
-<<<<<<< Updated upstream
-=======
-
-
-# change test
-#second test
-#stef test
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+# removed unresolved git conflict markers
