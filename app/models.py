@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 import uuid
 from datetime import datetime
+import sqlalchemy.dialects.postgresql as pg
 
 db = SQLAlchemy()
 
@@ -93,8 +94,8 @@ class PhotoTag(db.Model):
 
 class Feedback(db.Model):
     __tablename__ = 'feedback'
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    booking_id = db.Column(db.String(36), db.ForeignKey('bookings.id'), nullable=False)
+    id = db.Column(pg.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    booking_id = db.Column(pg.UUID(as_uuid=True), db.ForeignKey('bookings.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
