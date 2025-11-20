@@ -1,7 +1,9 @@
 # app/routes.py
 
-from flask import Blueprint, request, redirect, url_for, render_template, session
-from .models import db, User
+from flask import Blueprint, request, redirect, url_for, render_template, session, flash
+from werkzeug.security import generate_password_hash
+from app import db
+from app.models import Client
 
 main = Blueprint('main', __name__)
 
@@ -14,16 +16,29 @@ def index():
 
 @main.route('/register', methods=['GET', 'POST'])
 def register():
+    error = None
     if request.method == 'POST':
-        username = request.form['username']
-        if User.query.filter_by(username=username).first() is None:
-            new_user = User(username=username)
-            db.session.add(new_user)
+        name = request.form['name'].strip()
+        email = request.form['email'].strip().lower()
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        # Basic validation
+        if not name or not email or not password or not confirm_password:
+            error = "All fields are required."
+        elif password != confirm_password:
+            error = "Passwords do not match."
+        elif db.session.query(Client).filter_by(email=email).first():
+            error = "Email already registered."
+        else:
+            # Create new client
+            hashed_pw = generate_password_hash(password)
+            new_client = Client(name=name, email=email, password_hash=hashed_pw, role='user')
+            db.session.add(new_client)
             db.session.commit()
-            session['user_id'] = new_user.id
-            return redirect(url_for('main.index'))
-        return 'Username already registered'
-    return render_template('register.html')
+            return redirect(url_for('login'))
+
+    return render_template('register.html', error=error)
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():

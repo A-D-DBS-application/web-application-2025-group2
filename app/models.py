@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+import uuid
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -9,8 +11,8 @@ class User(db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
-    
-# ...existing code...
+
+
 class Category(db.Model):
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -20,15 +22,16 @@ class Category(db.Model):
 
 
 class Client(db.Model):
-    clientid = db.Column(db.Integer, primary_key=True)
+    __tablename__ = 'clients'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    role = db.Column(db.String(32), default='user')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<Client {self.clientid} {self.email}>'
+        return f'<Client {self.id} {self.email}>'
 
 
 class Photographer(db.Model):
@@ -40,8 +43,9 @@ class Photographer(db.Model):
 
 
 class Booking(db.Model):
-    booking_id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.clientid'), nullable=False)
+    __tablename__ = 'bookings'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.String(36), db.ForeignKey('clients.id'), nullable=False)
     photographer_id = db.Column(db.Integer, db.ForeignKey('photographer.id'), nullable=False)
     booking_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(50), nullable=False)
@@ -51,7 +55,7 @@ class Booking(db.Model):
     photographer = db.relationship('Photographer', backref=db.backref('bookings', lazy=True))
 
     def __repr__(self):
-        return f'<Booking {self.booking_id}>'
+        return f'<Booking {self.id}>'
 
 
 class Photo(db.Model):
@@ -119,6 +123,5 @@ class KVStore(db.Model):
 
     def __repr__(self):
         return f'<KVStore {self.key}>'
-# ...existing code...
 
 
