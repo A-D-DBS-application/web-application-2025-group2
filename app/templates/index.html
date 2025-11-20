@@ -3,18 +3,346 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Kodak - Book Local Photographers</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: #333;
+        }
+        
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 80px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+        .nav-links .btn-register {
+            background: #ffa940;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .nav-links .btn-register:hover {
+            background: #ff9800;
+        }
+        
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 500px;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1606991411686-f0ab06ca0e44?w=1600') center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 32px;
+        }
+        .btn-book {
+            background: #ffa940;
+            color: #fff;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-book:hover {
+            background: #ff9800;
+        }
+        
+        /* How It Works */
+        .how-it-works {
+            background: #e3f2fd;
+            padding: 80px 80px;
+            text-align: center;
+        }
+        .how-it-works h2 {
+            font-size: 2rem;
+            margin-bottom: 60px;
+            font-weight: 600;
+        }
+        .steps {
+            display: flex;
+            justify-content: space-around;
+            gap: 40px;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+        }
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            background: #1E88E5;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #fff;
+        }
+        .step h3 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+        .step p {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        /* Featured Photographers */
+        .featured {
+            padding: 80px 80px;
+            background: #fff;
+        }
+        .featured h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 60px;
+            font-weight: 600;
+        }
+        .photographers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        .photographer-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .photographer-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+        .photographer-info {
+            padding: 20px;
+        }
+        .photographer-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        .photographer-info .location {
+            color: #E91E63;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .photographer-info .price {
+            color: #ffa940;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .photographer-info .category {
+            color: #1E88E5;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+        .btn-view {
+            width: 100%;
+            background: #1E88E5;
+            color: #fff;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-view:hover {
+            background: #1565C0;
+        }
+        .view-all {
+            text-align: center;
+            margin-top: 40px;
+        }
+        .btn-view-all {
+            background: #1E88E5;
+            color: #fff;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        /* Footer */
+        footer {
+            background: #1E88E5;
+            color: #fff;
+            padding: 40px 80px;
+            text-align: center;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+        .footer-links a {
+            color: #fff;
+            text-decoration: none;
+        }
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .social-icons a {
+            color: #fff;
+            font-size: 1.5rem;
+        }
+        footer p {
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-    {% if username %}
-        <h1>Welcome, {{ username }}!</h1>
-        <form action="{{ url_for('main.logout') }}" method="post">
-            <button type="submit">Logout</button>
-        </form>
-    {% else %}
-        <h1>You are not logged in</h1>
-        <a href="{{ url_for('main.login') }}">Login</a>
-        <a href="{{ url_for('main.register') }}">Register</a>
-    {% endif %}
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">De Kodak</div>
+        <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">HOME</a>
+            <a href="#">PHOTOGRAPHERS</a>
+            <a href="#">ABOUT</a>
+            {% if username %}
+                <a href="#">Welcome, {{ username }}</a>
+                <form action="{{ url_for('main.logout') }}" method="POST" style="display:inline;">
+                    <button type="submit" style="background:none;border:none;color:#333;cursor:pointer;font-weight:500;">LOGOUT</button>
+                </form>
+            {% else %}
+                <a href="{{ url_for('main.login') }}">LOGIN</a>
+                <a href="{{ url_for('main.register') }}" class="btn-register">REGISTER</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Book a local photographer in one click.</h1>
+        <p>Affordable and personal photo sessions near you.</p>
+        <a href="#" class="btn-book">Book Now</a>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-icon">🔍</div>
+                <h3>Find a photographer</h3>
+                <p>Browse through local photographers and find the perfect match for your style.</p>
+            </div>
+            <div class="step">
+                <div class="step-icon">📅</div>
+                <h3>Book a session</h3>
+                <p>Choose a date and time that works for you and book instantly.</p>
+            </div>
+            <div class="step">
+                <div class="step-icon">📷</div>
+                <h3>Receive your photos</h3>
+                <p>Get your professionally edited photos delivered directly to you.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Photographers -->
+    <section class="featured">
+        <h2>Featured Photographers</h2>
+        <div class="photographers">
+            <div class="photographer-card">
+                <img src="https://images.unsplash.com/photo-1554384645-13eab165c24b?w=400" alt="Photographer">
+                <div class="photographer-info">
+                    <h3>Emma van Berg</h3>
+                    <p class="location">📍 Amsterdam</p>
+                    <p class="price">💰 €75/hour</p>
+                    <p class="category">Portrait & Studio</p>
+                    <button class="btn-view">View Profile</button>
+                </div>
+            </div>
+            <div class="photographer-card">
+                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Photographer">
+                <div class="photographer-info">
+                    <h3>Lars de Vries</h3>
+                    <p class="location">📍 Rotterdam</p>
+                    <p class="price">💰 €90/hour</p>
+                    <p class="category">Wedding & Events</p>
+                    <button class="btn-view">View Profile</button>
+                </div>
+            </div>
+            <div class="photographer-card">
+                <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400" alt="Photographer">
+                <div class="photographer-info">
+                    <h3>Sophie Janssen</h3>
+                    <p class="location">📍 Utrecht</p>
+                    <p class="price">💰 €65/hour</p>
+                    <p class="category">Nature & Outdoor</p>
+                    <button class="btn-view">View Profile</button>
+                </div>
+            </div>
+        </div>
+        <div class="view-all">
+            <a href="#" class="btn-view-all">View all photographers</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+            <a href="#">Privacy</a>
+        </div>
+        <div class="social-icons">
+            <a href="#">📘</a>
+            <a href="#">📷</a>
+            <a href="#">🐦</a>
+        </div>
+        <p>© 2025 De Kodak. All rights reserved.</p>
+    </footer>
 </body>
 </html>
