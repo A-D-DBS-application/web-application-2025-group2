@@ -127,3 +127,9 @@ class KVStore(db.Model):
         return f'<KVStore {self.key}>'
 
 
+@app.route('/login')
+def login():
+    # This is a placeholder for the login function
+    return 'Login page'
+
+
