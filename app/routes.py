@@ -1,7 +1,7 @@
 # app/routes.py
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from app.models import Client
 
@@ -45,14 +45,21 @@ def register():
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
-        username = request.form['username']
-        user = User.query.filter_by(username=username).first()
-        if user:
-            session['user_id'] = user.id
+        email = request.form['email'].strip().lower()
+        password = request.form['password']
+
+        client = Client.query.filter_by(email=email).first()
+        
+        if client and check_password_hash(client.password_hash, password):
+            session['user_id'] = client.id
+            session['user_name'] = client.name
             return redirect(url_for('main.index'))
-        return 'User not found'
-    return render_template('login.html')
+        else:
+            error = "Invalid email or password."
+
+    return render_template('login.html', error=error)
 
 @main.route('/logout', methods=['POST'])
 def logout():
