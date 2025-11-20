@@ -31,7 +31,12 @@ def register():
             error = "Email already registered."
         else:
             hashed_pw = generate_password_hash(password)
-            new_client = Client(name=name, email=email, password_hash=hashed_pw, role='user')
+            new_client = Client(
+                name=name,
+                email=email,
+                password_hash=hashed_pw,
+                role='client'  # Use one of the allowed values
+            )
             db.session.add(new_client)
             db.session.commit()
             return redirect(url_for('main.login'))
