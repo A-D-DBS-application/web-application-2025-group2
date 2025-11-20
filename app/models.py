@@ -92,8 +92,9 @@ class PhotoTag(db.Model):
 
 
 class Feedback(db.Model):
-    feedback_id = db.Column(db.Integer, primary_key=True)
-    booking_id = db.Column(db.Integer, db.ForeignKey('booking.booking_id'), nullable=False)
+    __tablename__ = 'feedback'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    booking_id = db.Column(db.String(36), db.ForeignKey('bookings.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -101,7 +102,7 @@ class Feedback(db.Model):
     booking = db.relationship('Booking', backref=db.backref('feedbacks', lazy=True))
 
     def __repr__(self):
-        return f'<Feedback {self.feedback_id}>'
+        return f'<Feedback {self.id}>'
 
 
 class Notification(db.Model):
