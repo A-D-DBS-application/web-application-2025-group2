@@ -1,6 +1,6 @@
 # app/routes.py
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash
 from app import db
 from app.models import Client
