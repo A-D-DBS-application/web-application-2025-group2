@@ -1,129 +1,20 @@
-'''import os, urllib.parse as up
-uri = os.getenv("SQLALCHEMY_DATABASE_URI", "")
-if not uri:
-    print("Using DB: <not set>")
-else:
-    p = up.urlparse(uri)
-    safe = p._replace(netloc=p.netloc.replace(p.password or "", "***")).geturl()
-    print("Using DB:", safe)
-
-
-class Config: 
-    
-    
-    SECRET_KEY = 'your_secret_key'
-    SQLALCHEMY_DATABASE_URI= 'postgresql+psycopg2://postgres:dmlaneo4627@db.eggbqllnmdtwvhcaoiva.supabase.co:5432/postgres?sslmode=require&hostaddr=208.67.222.222'
-
-
-
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-
-'''
-'''
-# app/config.py
 import os
-from dotenv import load_dotenv, find_dotenv
-from sqlalchemy.engine import URL
+from dotenv import load_dotenv
 
-# Load .env once at import time
-load_dotenv(find_dotenv(), override=True)
-
-def _build_database_uri() -> str:
-    host = os.getenv("DB_HOST", "db.eggbqllnmdtwvhcaoiva.supabase.co")
-    port = int(os.getenv("DB_PORT", "5432"))
-    dbname = os.getenv("DB_NAME", "postgres")
-    user = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD")
-
-    if not password:
-        raise RuntimeError("DB_PASSWORD is not set. Create a .env file with DB_* values.")
-
-    # Prefer IPv4 hostaddr if provided; else IPv6; else rely on DNS
-    v4 = os.getenv("DB_HOSTADDR_V4")
-    v6 = os.getenv("DB_HOSTADDR_V6")
-    query = {"sslmode": "require"}
-    if v4:
-        query["hostaddr"] = v4
-    elif v6:
-        query["hostaddr"] = v6
-
-    url = URL.create(
-        drivername="postgresql+psycopg2",
-        username=user,
-        password=password,
-        host=host,            # keep hostname for TLS/SNI
-        port=port,
-        database=dbname,
-        query=query,
-    )
-
-    # IMPORTANT: Flask-SQLAlchemy expects a full string; render with password visible
-    return url.render_as_string(hide_password=False)
+load_dotenv()
 
 class Config:
-    # Flask
-    SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(24).hex())
-
-    # SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = _build_database_uri()
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": True,   # avoid stale connections
-    }
-
-    # Session cookie hardening (safe defaults)
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
-'''
-
-# app/config.py
-import os
-from dotenv import load_dotenv, find_dotenv
-from sqlalchemy.engine import URL
-from sqlalchemy.pool import NullPool  # recommended with PgBouncer
-
-# Load .env once at import time
-load_dotenv(find_dotenv(), override=True)
-
-def _build_database_uri() -> str:
-    host = os.getenv("DB_HOST")                              # e.g. aws-1-eu-central-1.pooler.supabase.com
-    port = int(os.getenv("DB_PORT", "6543"))                 # pooler default
-    dbname = os.getenv("DB_NAME", "postgres")
-    user = os.getenv("DB_USER")                              # e.g. postgres.eggbqllnmdtwvhcaoiva
-    password = os.getenv("DB_PASSWORD")
-
-    if not all([host, user, password]):
-        raise RuntimeError("Missing DB env vars. Ensure DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD are set in .env")
-
-    # Build a psycopg2/SQLAlchemy URL; with pooler do NOT set hostaddr
-    url = URL.create(
-        drivername="postgresql+psycopg2",
-        username=user,
-        password=password,
-        host=host,
-        port=port,
-        database=dbname,
-        query={"sslmode": "require"},
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+    
+    # Use pooler connection with options parameter
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+        f"?options=-c%20statement_timeout=30s"
     )
-    # Render to full string (Flask-SQLAlchemy expects str)
-    return url.render_as_string(hide_password=False)
-
-class Config:
-    # Flask
-    SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(24).hex())
-
-    # SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = _build_database_uri()
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    # With PgBouncer (transaction pooler) prefer NO client-side pooling
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "poolclass": NullPool,   # avoids “double pooling”
-        # If you choose to use client pooling instead, comment the line above and use:
-        # "pool_pre_ping": True, "pool_size": 5, "max_overflow": 0,
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
     }
-
-    # Cookies: reasonable defaults
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
