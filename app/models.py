@@ -10,6 +10,7 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -105,6 +106,34 @@ class Notification(db.Model):
 
     def __repr__(self):
         return f'<Notification {self.notification_id}>'
+
+
+class Photographer(db.Model):
+    __tablename__ = 'photographer'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), nullable=True)
+    bio = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Photographer {self.name}>'
+
+
+class PhotographerAvailability(db.Model):
+    __tablename__ = 'photographer_availability'
+    id = db.Column(db.Integer, primary_key=True)
+    photographer_id = db.Column(db.Integer, db.ForeignKey('photographer.id'), nullable=False)
+    available_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.String(5), nullable=False)  # Format: HH:MM
+    end_time = db.Column(db.String(5), nullable=False)    # Format: HH:MM
+    is_available = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    photographer = db.relationship('Photographer', backref=db.backref('availability_slots', lazy=True))
+
+    def __repr__(self):
+        return f'<PhotographerAvailability {self.photographer_id} {self.available_date}>'
 
 
 
