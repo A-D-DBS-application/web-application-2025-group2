@@ -48,12 +48,17 @@ class Booking(db.Model):
 
 class Photo(db.Model):
     photo_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Client who ordered
+    photographer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Photographer who took it
+    booking_id = db.Column(pg.UUID(as_uuid=True), db.ForeignKey('bookings.id'), nullable=True)  # Related booking
     category_id = db.Column(db.Integer, db.ForeignKey('category.category_id'), nullable=True)
     image_url = db.Column(db.String(1024), nullable=False)
+    title = db.Column(db.String(200), nullable=True)
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    user = db.relationship('User', backref=db.backref('photos', lazy=True))
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('client_photos', lazy=True))
+    photographer = db.relationship('User', foreign_keys=[photographer_id], backref=db.backref('photographer_photos', lazy=True))
+    booking = db.relationship('Booking', backref=db.backref('photos', lazy=True))
     category = db.relationship('Category', backref=db.backref('photos', lazy=True))
 
     def __repr__(self):

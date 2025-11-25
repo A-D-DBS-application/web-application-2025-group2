@@ -308,39 +308,24 @@
     <section class="featured">
         <h2>Featured Photographers</h2>
         <div class="photographers">
-            <div class="photographer-card">
-                <img src="https://images.unsplash.com/photo-1554384645-13eab165c24b?w=400" alt="Photographer">
-                <div class="photographer-info">
-                    <h3>Emma van Berg</h3>
-                    <p class="location">📍 Amsterdam</p>
-                    <p class="price">💰 €75/hour</p>
-                    <p class="category">Portrait & Studio</p>
-                    <button class="btn-view">View Profile</button>
+            {% if photographers %}
+                {% for photographer in photographers %}
+                <div class="photographer-card">
+                    <img src="https://images.unsplash.com/photo-1554384645-13eab165c24b?w=400" alt="{{ photographer.name }}">
+                    <div class="photographer-info">
+                        <h3>{{ photographer.name }}</h3>
+                        <p class="location">📧 {{ photographer.email }}</p>
+                        <p class="category">📷 Professional Photographer</p>
+                        <a href="{{ url_for('main.book') }}" class="btn-view">Book Now</a>
+                    </div>
                 </div>
-            </div>
-            <div class="photographer-card">
-                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Photographer">
-                <div class="photographer-info">
-                    <h3>Lars de Vries</h3>
-                    <p class="location">📍 Rotterdam</p>
-                    <p class="price">💰 €90/hour</p>
-                    <p class="category">Wedding & Events</p>
-                    <button class="btn-view">View Profile</button>
-                </div>
-            </div>
-            <div class="photographer-card">
-                <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400" alt="Photographer">
-                <div class="photographer-info">
-                    <h3>Sophie Janssen</h3>
-                    <p class="location">📍 Utrecht</p>
-                    <p class="price">💰 €65/hour</p>
-                    <p class="category">Nature & Outdoor</p>
-                    <button class="btn-view">View Profile</button>
-                </div>
-            </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #999;">No photographers available yet.</p>
+            {% endif %}
         </div>
         <div class="view-all">
-            <a href="#" class="btn-view-all">View all photographers</a>
+            <a href="{{ url_for('main.book') }}" class="btn-view-all">Book a photographer</a>
         </div>
     </section>
 

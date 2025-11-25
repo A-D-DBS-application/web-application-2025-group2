@@ -117,9 +117,9 @@
             <label for="photographer">Select Photographer</label>
             <select id="photographer" name="photographer_id" required onchange="loadPhotographerSlots()">
                 <option value="">Choose a photographer...</option>
-                <option value="1">Emma van Berg</option>
-                <option value="2">Lars de Vries</option>
-                <option value="3">Sophie Janssen</option>
+                {% for pid, photo in photographers.items() %}
+                    <option value="{{ pid }}">{{ photo.name }}</option>
+                {% endfor %}
             </select>
 
             <label for="slot">Available Date & Time</label>
