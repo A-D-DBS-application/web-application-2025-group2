@@ -3,7 +3,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import User, Booking, PhotographerAvailability, Photographer
+from app.models import User, Booking, PhotographerAvailability
 from datetime import datetime, timedelta
 import json
 
@@ -13,6 +13,9 @@ main = Blueprint('main', __name__)
 def index():
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
+        # Redirect photographers to their dashboard
+        if user and user.role == 'photographer':
+            return redirect(url_for('main.photographer_dashboard'))
         return render_template('index.html', username=user.name if user else None)
     return render_template('index.html', username=None)
 
@@ -140,11 +143,9 @@ def book():
         return redirect(url_for('main.booking_confirmation', booking_id=new_booking.id))
     
     # GET request - show form
-    photographer_map = {
-        1: {'name': 'Emma van Berg', 'id': 1},
-        2: {'name': 'Lars de Vries', 'id': 2},
-        3: {'name': 'Sophie Janssen', 'id': 3}
-    }
+    # Get all users with photographer role
+    photographers = User.query.filter_by(role='photographer').all()
+    photographer_map = {p.id: {'name': p.name, 'id': p.id} for p in photographers}
     
     return render_template('book.html', photographers=photographer_map)
 
@@ -158,15 +159,13 @@ def booking_confirmation(booking_id):
         flash('Booking not found.')
         return redirect(url_for('main.index'))
     
-    photographer_names = {
-        1: 'Emma van Berg',
-        2: 'Lars de Vries',
-        3: 'Sophie Janssen'
-    }
+    # Get photographer name from User table
+    photographer = User.query.get(booking.photographer_id)
+    photographer_name = photographer.name if photographer else 'Unknown'
     
     return render_template('booking_confirmation.html', 
                          booking=booking,
-                         photographer_name=photographer_names.get(booking.photographer_id, 'Unknown'))
+                         photographer_name=photographer_name)
 
 @main.route('/admin/add-availability', methods=['GET', 'POST'])
 def add_availability():
@@ -189,7 +188,8 @@ def add_availability():
         flash('Availability added successfully!')
         return redirect(url_for('main.index'))
     
-    photographers = Photographer.query.all()
+    # Get all users with photographer role
+    photographers = User.query.filter_by(role='photographer').all()
     return render_template('add_availability.html', photographers=photographers)
 
 @main.route('/bookings')
@@ -223,7 +223,7 @@ def booking_detail(booking_id):
         flash('You do not have permission to view this booking.')
         return redirect(url_for('main.bookings'))
     
-    photographer = Photographer.query.get(booking.photographer_id)
+    photographer = User.query.get(booking.photographer_id)
     client = User.query.get(booking.client_id)
     
     return render_template('booking_detail.html', booking=booking, photographer=photographer, client=client)
@@ -276,3 +276,80 @@ def update_booking(booking_id):
     
     flash('Booking updated successfully.')
     return redirect(url_for('main.booking_detail', booking_id=booking_id))
+
+@main.route('/dashboard/photographer')
+def photographer_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user or user.role != 'photographer':
+        flash('Access denied. Photographers only.')
+        return redirect(url_for('main.index'))
+    
+    # Get bookings WHERE this user is the photographer
+    bookings_as_photographer = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    
+    # Get bookings WHERE this user is the client (photographer booking someone else)
+    bookings_as_client = Booking.query.filter_by(client_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    
+    # Get photographer names for bookings where photographer booked someone
+    photographer_names = {}
+    for booking in bookings_as_client:
+        if booking.photographer_id:
+            photographer = User.query.get(booking.photographer_id)
+            if photographer:
+                photographer_names[booking.photographer_id] = photographer.name
+    
+    # Get client names for bookings this photographer received
+    client_names = {}
+    for booking in bookings_as_photographer:
+        if booking.client_id:
+            client = User.query.get(booking.client_id)
+            if client:
+                client_names[booking.client_id] = client.name
+    
+    # Get availability slots
+    availability_slots = PhotographerAvailability.query.filter_by(
+        photographer_id=user.id
+    ).order_by(PhotographerAvailability.available_date).all()
+    
+    return render_template('photographer_dashboard.html', 
+                         user=user,
+                         bookings_as_photographer=bookings_as_photographer,
+                         bookings_as_client=bookings_as_client,
+                         availability_slots=availability_slots,
+                         photographer_names=photographer_names,
+                         client_names=client_names)
+
+@main.route('/photographer/add-availability', methods=['POST'])
+def add_availability_slot():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user or user.role != 'photographer':
+        flash('Access denied. Photographers only.')
+        return redirect(url_for('main.index'))
+    
+    date = request.form.get('date')
+    start_time = request.form.get('start_time')
+    end_time = request.form.get('end_time')
+    
+    if not date or not start_time or not end_time:
+        flash('All fields are required.')
+        return redirect(url_for('main.photographer_dashboard'))
+    
+    # Create availability slot
+    new_slot = PhotographerAvailability(
+        photographer_id=user.id,
+        available_date=datetime.strptime(date, '%Y-%m-%d').date(),
+        start_time=start_time,
+        end_time=end_time,
+        is_available=True
+    )
+    db.session.add(new_slot)
+    db.session.commit()
+    
+    flash('Availability slot added successfully!')
+    return redirect(url_for('main.photographer_dashboard'))
