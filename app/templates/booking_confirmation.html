@@ -117,8 +117,8 @@
 
     <div class="container">
         <div class="checkmark"></div>
-        <h1>Booking Bevestigd!</h1>
-        <p class="subtitle">Je boeking is succesvol opgeslagen. De fotograaf neemt binnenkort contact met je op.</p>
+        <h1>Booking Confirmed!</h1>
+        <p class="subtitle">Your booking has been successfully saved. The photographer will contact you shortly.</p>
 
         <div class="booking-details">
             <div class="detail-row">
@@ -126,12 +126,12 @@
                 <span class="detail-value">{{ booking.id }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Fotograaf:</span>
+                <span class="detail-label">Photographer:</span>
                 <span class="detail-value">{{ photographer_name }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Datum & Tijd:</span>
-                <span class="detail-value">{{ booking.booking_date_and_time.strftime('%d-%m-%Y om %H:%M') }}</span>
+                <span class="detail-label">Date & Time:</span>
+                <span class="detail-value">{{ booking.booking_date_and_time.strftime('%d-%m-%Y at %H:%M') }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Type:</span>
@@ -139,13 +139,13 @@
             </div>
             {% if booking.description %}
             <div class="detail-row">
-                <span class="detail-label">Notities:</span>
+                <span class="detail-label">Notes:</span>
                 <span class="detail-value">{{ booking.description }}</span>
             </div>
             {% endif %}
         </div>
 
-        <a href="{{ url_for('main.index') }}" class="btn">Terug naar Home</a>
+        <a href="{{ url_for('main.index') }}" class="btn">Back to Home</a>
     </div>
 </body>
 </html>
