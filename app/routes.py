@@ -125,10 +125,9 @@ def book():
         new_booking = Booking(
             client_id=session['user_id'],
             photographer_id=int(photographer_id),
-            booking_date=booking_datetime,
+            booking_date_and_time=booking_datetime,
             type='session',
-            description=notes,
-            status='pending'
+            description=notes
         )
         db.session.add(new_booking)
         

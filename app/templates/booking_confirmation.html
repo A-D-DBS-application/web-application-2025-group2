@@ -131,15 +131,11 @@
             </div>
             <div class="detail-row">
                 <span class="detail-label">Datum & Tijd:</span>
-                <span class="detail-value">{{ booking.booking_date.strftime('%d-%m-%Y om %H:%M') }}</span>
+                <span class="detail-value">{{ booking.booking_date_and_time.strftime('%d-%m-%Y om %H:%M') }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Type:</span>
                 <span class="detail-value">{{ booking.type }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Status:</span>
-                <span class="detail-value">{{ booking.status }}</span>
             </div>
             {% if booking.description %}
             <div class="detail-row">
