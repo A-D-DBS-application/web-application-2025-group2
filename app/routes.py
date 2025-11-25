@@ -64,6 +64,12 @@ def login():
 
     return render_template('login.html', error=error)
 
+@main.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    flash('You have been logged out successfully.')
+    return redirect(url_for('main.index'))
+
 @main.route('/api/photographer-slots/<int:photographer_id>')
 def get_photographer_slots(photographer_id):
     """API endpoint to get available slots for a photographer"""
