@@ -69,6 +69,11 @@ def logout():
 
 @main.route('/book', methods=['GET', 'POST'])
 def book():
+    # Check if user is logged in
+    if 'user_id' not in session:
+        flash('Please log in to book a photographer.')
+        return redirect(url_for('main.login'))
+    
     if request.method == 'POST':
         photographer = request.form.get('photographer')
         date = request.form.get('date')
@@ -76,45 +81,37 @@ def book():
         name = request.form.get('name')
         email = request.form.get('email')
         notes = request.form.get('notes')
-
-        # Basic validation
-        if not (photographer and date and time and name and email):
-            error = 'Please fill in all required fields.'
-            return render_template('book.html', error=error)
-
-        # combine date and time into a datetime object
-        try:
-            booking_dt = datetime.fromisoformat(f"{date}T{time}")
-        except Exception:
-            error = 'Invalid date or time format.'
-            return render_template('book.html', error=error)
-
-        # photographer field contains an integer id from the select
-        try:
-            photographer_id = int(photographer)
-        except ValueError:
-            error = 'Invalid photographer selected.'
-            return render_template('book.html', error=error)
-
-        # Get client_id as integer if user is logged in
-        client_id = None
-        if 'user_id' in session:
-            # You may need to create a mapping or just use a simple integer ID
-            client_id = 1  # Or fetch from your Client table
         
-        # create Booking record and save to DB (Supabase)
+        # Combine date and time
+        booking_datetime = datetime.strptime(f"{date} {time}", '%Y-%m-%d %H:%M')
+        
+        # Get photographer_id (hardcoded for now, you'll need to map photographer names to IDs)
+        photographer_map = {
+            'emma': 1,
+            'lars': 2,
+            'sophie': 3
+        }
+        photographer_id = photographer_map.get(photographer, 1)
+        
+        # Get client_id from logged-in user
+        client_id = session['user_id']
+        
+        if not client_id:
+            flash('You must be logged in to book a photographer.')
+            return redirect(url_for('main.login'))
+        
         new_booking = Booking(
-            client_id=client_id,  # Now using client_id
+            client_id=client_id,  # Now has a valid integer value
             photographer_id=photographer_id,
-            booking_date=booking_dt,
+            booking_date=booking_datetime,
             type='session',
             description=notes,
             status='pending'
         )
         db.session.add(new_booking)
         db.session.commit()
-
-        success = 'Your booking request has been sent. The photographer will contact you shortly.'
-        return render_template('book.html', success=success)
-
+        
+        flash('Booking request submitted successfully!')
+        return redirect(url_for('main.index'))
+    
     return render_template('book.html')
