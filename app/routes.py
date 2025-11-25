@@ -65,3 +65,20 @@ def login():
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('main.index'))
+
+@main.route('/book', methods=['GET', 'POST'])
+def book():
+    if request.method == 'POST':
+        photographer = request.form.get('photographer')
+        date = request.form.get('date')
+        time = request.form.get('time')
+        name = request.form.get('name')
+        email = request.form.get('email')
+        notes = request.form.get('notes')
+
+        # TODO: Save booking to database
+        # For now, show success message
+        success = 'Your booking request has been sent. The photographer will contact you shortly.'
+        return render_template('book.html', success=success)
+
+    return render_template('book.html')
