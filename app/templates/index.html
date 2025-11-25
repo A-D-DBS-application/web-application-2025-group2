@@ -247,16 +247,18 @@
         <div class="logo">De Kodak</div>
         <div class="nav-links">
             <a href="{{ url_for('main.index') }}">HOME</a>
-            <a href="#">PHOTOGRAPHERS</a>
-            <a href="#">ABOUT</a>
             {% if username %}
-                <a href="#">Welcome, {{ username }}</a>
+                <a href="{{ url_for('main.bookings') }}">MY BOOKINGS</a>
+                <a href="{{ url_for('main.book') }}">BOOK NOW</a>
+            {% endif %}
+            {% if username %}
+                <span style="margin-left: 20px; color: #666;">Hello, {{ username }}!</span>
                 <form action="{{ url_for('main.logout') }}" method="POST" style="display:inline;">
-                    <button type="submit" style="background:none;border:none;color:#333;cursor:pointer;font-weight:500;">LOGOUT</button>
+                    <button type="submit" style="background:none;border:none;color:#333;font-weight:500;cursor:pointer;margin-left:20px;">LOGOUT</button>
                 </form>
             {% else %}
                 <a href="{{ url_for('main.login') }}">LOGIN</a>
-                <a href="{{ url_for('main.register') }}" class="btn-register">REGISTER</a>
+                <a href="{{ url_for('main.register') }}">REGISTER</a>
             {% endif %}
         </div>
     </nav>
@@ -289,6 +291,18 @@
             </div>
         </div>
     </section>
+
+    {% if username %}
+    <section style="padding: 80px 20px; background: #f5f5f5;">
+        <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 20px;">Quick Actions</h2>
+            <div style="display: flex; gap: 20px; justify-content: center; margin-top: 40px;">
+                <a href="{{ url_for('main.bookings') }}" style="background: #1E88E5; color: #fff; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: 600;">View My Bookings</a>
+                <a href="{{ url_for('main.book') }}" style="background: #4CAF50; color: #fff; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: 600;">Book a Photographer</a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
 
     <!-- Featured Photographers -->
     <section class="featured">
