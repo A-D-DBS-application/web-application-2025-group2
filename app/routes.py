@@ -1,10 +1,11 @@
 # app/routes.py
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import User, Booking
-from datetime import datetime
+from app.models import User, Booking, PhotographerAvailability
+from datetime import datetime, timedelta
+import json
 
 main = Blueprint('main', __name__)
 
@@ -63,10 +64,22 @@ def login():
 
     return render_template('login.html', error=error)
 
-@main.route('/logout', methods=['POST'])
-def logout():
-    session.pop('user_id', None)
-    return redirect(url_for('main.index'))
+@main.route('/api/photographer-slots/<int:photographer_id>')
+def get_photographer_slots(photographer_id):
+    """API endpoint to get available slots for a photographer"""
+    slots = PhotographerAvailability.query.filter(
+        PhotographerAvailability.photographer_id == photographer_id,
+        PhotographerAvailability.available_date >= datetime.now().date(),
+        PhotographerAvailability.is_available == True
+    ).order_by(PhotographerAvailability.available_date).all()
+    
+    return jsonify([{
+        'id': slot.id,
+        'date': slot.available_date.isoformat(),
+        'start_time': slot.start_time,
+        'end_time': slot.end_time,
+        'display': f"{slot.available_date.strftime('%d-%m-%Y')} {slot.start_time}-{slot.end_time}"
+    } for slot in slots])
 
 @main.route('/book', methods=['GET', 'POST'])
 def book():
@@ -76,33 +89,26 @@ def book():
         return redirect(url_for('main.login'))
     
     if request.method == 'POST':
-        photographer = request.form.get('photographer')
-        date = request.form.get('date')
-        time = request.form.get('time')
+        photographer_id = request.form.get('photographer_id')
+        slot_id = request.form.get('slot_id')
         name = request.form.get('name')
         email = request.form.get('email')
         notes = request.form.get('notes')
         
-        # Combine date and time
-        booking_datetime = datetime.strptime(f"{date} {time}", '%Y-%m-%d %H:%M')
+        # Get the availability slot
+        slot = PhotographerAvailability.query.get(slot_id)
+        if not slot or slot.photographer_id != int(photographer_id):
+            flash('Invalid time slot selected.')
+            return redirect(url_for('main.book'))
         
-        # Get photographer_id (hardcoded for now, you'll need to map photographer names to IDs)
-        photographer_map = {
-            'emma': 1,
-            'lars': 2,
-            'sophie': 3
-        }
-        photographer_id = photographer_map.get(photographer, 1)
+        # Combine date and time
+        booking_datetime = datetime.combine(slot.available_date, datetime.strptime(slot.start_time, '%H:%M').time())
         
         # Get client_id from logged-in user
         client_id = session['user_id']
         
-        if not client_id:
-            flash('You must be logged in to book a photographer.')
-            return redirect(url_for('main.login'))
-        
         new_booking = Booking(
-            client_id=client_id,  # Now has a valid integer value
+            client_id=client_id,
             photographer_id=photographer_id,
             booking_date=booking_datetime,
             type='session',
@@ -115,4 +121,34 @@ def book():
         flash('Booking request submitted successfully!')
         return redirect(url_for('main.index'))
     
-    return render_template('book.html')
+    # Get all photographers with their availability
+    photographers_data = {}
+    availability_data = {}
+    
+    # Map photographer IDs to names (you can get this from DB if needed)
+    photographer_map = {
+        1: {'name': 'Emma', 'id': 1},
+        2: {'name': 'Lars', 'id': 2},
+        3: {'name': 'Sophie', 'id': 3}
+    }
+    
+    # Get availability for all photographers
+    slots = PhotographerAvailability.query.filter(
+        PhotographerAvailability.available_date >= datetime.now().date(),
+        PhotographerAvailability.is_available == True
+    ).all()
+    
+    for slot in slots:
+        pid = slot.photographer_id
+        if pid not in availability_data:
+            availability_data[pid] = []
+        availability_data[pid].append({
+            'id': slot.id,
+            'date': slot.available_date.isoformat(),
+            'start_time': slot.start_time,
+            'end_time': slot.end_time
+        })
+    
+    return render_template('book.html', 
+                         photographers=photographer_map,
+                         availability=json.dumps(availability_data))
