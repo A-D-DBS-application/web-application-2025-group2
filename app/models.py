@@ -47,16 +47,8 @@ class Photographer(db.Model):
 class Booking(db.Model):
     __tablename__ = 'bookings'
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    # Align columns with Supabase 'bookings' table
-    # id (uuid) is primary key
-    # booking_date: timestamptz
-    # type: text (e.g. 'session')
-    # description: text
-    # status: text (e.g. pending/confirmed)
-    # created_at, updated_at
-    # photographer_id: integer
-    user_id = db.Column(db.String(36), db.ForeignKey('clients.id'), nullable=True)
-    photographer_id = db.Column(db.Integer, nullable=False)
+    client_id = db.Column(db.Integer, nullable=True)  # Changed from user_id, int4 type
+    photographer_id = db.Column(db.Integer, nullable=True)  # Changed to nullable
     booking_date = db.Column(db.DateTime, nullable=False)
     type = db.Column(db.String(120), nullable=True)
     description = db.Column(db.Text, nullable=True)
@@ -64,8 +56,8 @@ class Booking(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=True)
 
-    client = db.relationship('Client', backref=db.backref('bookings', lazy=True))
-
+    # Remove the relationship for now since client_id is int4, not a foreign key to clients table
+    
     def __repr__(self):
         return f'<Booking {self.id}>'
 
@@ -135,5 +127,5 @@ class KVStore(db.Model):
     value = db.Column(db.JSON, nullable=True)
 
     def __repr__(self):
-        return f'<KVStore {self.key}>'
+        return f'<KVStore {self.key}>
 

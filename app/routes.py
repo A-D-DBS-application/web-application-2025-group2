@@ -96,8 +96,15 @@ def book():
             error = 'Invalid photographer selected.'
             return render_template('book.html', error=error)
 
+        # Get client_id as integer if user is logged in
+        client_id = None
+        if 'user_id' in session:
+            # You may need to create a mapping or just use a simple integer ID
+            client_id = 1  # Or fetch from your Client table
+        
         # create Booking record and save to DB (Supabase)
         new_booking = Booking(
+            client_id=client_id,  # Now using client_id
             photographer_id=photographer_id,
             booking_date=booking_dt,
             type='session',
