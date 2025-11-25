@@ -3,7 +3,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import Client
+from app.models import Client, Booking
+from datetime import datetime
 
 main = Blueprint('main', __name__)
 
@@ -76,8 +77,36 @@ def book():
         email = request.form.get('email')
         notes = request.form.get('notes')
 
-        # TODO: Save booking to database
-        # For now, show success message
+        # Basic validation
+        if not (photographer and date and time and name and email):
+            error = 'Please fill in all required fields.'
+            return render_template('book.html', error=error)
+
+        # combine date and time into a datetime object
+        try:
+            booking_dt = datetime.fromisoformat(f"{date}T{time}")
+        except Exception:
+            error = 'Invalid date or time format.'
+            return render_template('book.html', error=error)
+
+        # photographer field contains an integer id from the select
+        try:
+            photographer_id = int(photographer)
+        except ValueError:
+            error = 'Invalid photographer selected.'
+            return render_template('book.html', error=error)
+
+        # create Booking record and save to DB (Supabase)
+        new_booking = Booking(
+            photographer_id=photographer_id,
+            booking_date=booking_dt,
+            type='session',
+            description=notes,
+            status='pending'
+        )
+        db.session.add(new_booking)
+        db.session.commit()
+
         success = 'Your booking request has been sent. The photographer will contact you shortly.'
         return render_template('book.html', success=success)
 
