@@ -3,7 +3,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import Client, Booking
+from app.models import User, Booking
 from datetime import datetime
 
 main = Blueprint('main', __name__)
@@ -11,7 +11,7 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     if 'user_id' in session:
-        user = Client.query.get(session['user_id'])
+        user = User.query.get(session['user_id'])
         return render_template('index.html', username=user.name if user else None)
     return render_template('index.html', username=None)
 
@@ -28,17 +28,17 @@ def register():
             error = "All fields are required."
         elif password != confirm_password:
             error = "Passwords do not match."
-        elif db.session.query(Client).filter_by(email=email).first():
+        elif db.session.query(User).filter_by(email=email).first():
             error = "Email already registered."
         else:
             hashed_pw = generate_password_hash(password)
-            new_client = Client(
+            new_user = User(
                 name=name,
                 email=email,
                 password_hash=hashed_pw,
-                role='client'  # Use one of the allowed values
+                role='user'
             )
-            db.session.add(new_client)
+            db.session.add(new_user)
             db.session.commit()
             return redirect(url_for('main.login'))
 
@@ -51,11 +51,11 @@ def login():
         email = request.form['email'].strip().lower()
         password = request.form['password']
 
-        client = Client.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email).first()
         
-        if client and check_password_hash(client.password_hash, password):
-            session['user_id'] = client.id
-            session['user_name'] = client.name
+        if user and check_password_hash(user.password_hash, password):
+            session['user_id'] = user.id
+            session['user_name'] = user.name
             return redirect(url_for('main.index'))
         else:
             error = "Invalid email or password."
