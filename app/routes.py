@@ -94,35 +94,80 @@ def book():
         return redirect(url_for('main.login'))
     
     if request.method == 'POST':
-        photographer = request.form.get('photographer')
-        date = request.form.get('date')
-        time = request.form.get('time')
+        photographer_id = request.form.get('photographer_id')
+        slot_id = request.form.get('slot_id')
+        name = request.form.get('name')
+        email = request.form.get('email')
         notes = request.form.get('notes')
         
-        booking_datetime = datetime.strptime(f"{date} {time}", '%Y-%m-%d %H:%M')
+        if not photographer_id or not slot_id:
+            flash('Please select a photographer and time slot.')
+            return redirect(url_for('main.book'))
         
-        photographer_map = {
-            'emma': 1,
-            'lars': 2,
-            'sophie': 3
-        }
-        photographer_id = photographer_map.get(photographer, 1)
+        # Get the availability slot
+        slot = PhotographerAvailability.query.get(slot_id)
+        if not slot or slot.photographer_id != int(photographer_id):
+            flash('Invalid time slot selected.')
+            return redirect(url_for('main.book'))
         
+        # Check if slot is still available
+        if not slot.is_available:
+            flash('This time slot is no longer available.')
+            return redirect(url_for('main.book'))
+        
+        # Combine date and time
+        booking_datetime = datetime.combine(
+            slot.available_date, 
+            datetime.strptime(slot.start_time, '%H:%M').time()
+        )
+        
+        # Create booking
         new_booking = Booking(
             client_id=session['user_id'],
-            photographer_id=photographer_id,
-            booking_date_and_time=booking_datetime,
+            photographer_id=int(photographer_id),
+            booking_date=booking_datetime,
             type='session',
-            description=notes
-            # Removed status - column doesn't exist
+            description=notes,
+            status='pending'
         )
         db.session.add(new_booking)
+        
+        # Mark slot as unavailable
+        slot.is_available = False
+        
         db.session.commit()
         
-        flash('Booking confirmed! The photographer will contact you soon.')
+        # Redirect to confirmation page
+        return redirect(url_for('main.booking_confirmation', booking_id=new_booking.id))
+    
+    # GET request - show form
+    photographer_map = {
+        1: {'name': 'Emma van Berg', 'id': 1},
+        2: {'name': 'Lars de Vries', 'id': 2},
+        3: {'name': 'Sophie Janssen', 'id': 3}
+    }
+    
+    return render_template('book.html', photographers=photographer_map)
+
+@main.route('/booking-confirmation/<booking_id>')
+def booking_confirmation(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    booking = Booking.query.get(booking_id)
+    if not booking or booking.client_id != session['user_id']:
+        flash('Booking not found.')
         return redirect(url_for('main.index'))
     
-    return render_template('book.html')
+    photographer_names = {
+        1: 'Emma van Berg',
+        2: 'Lars de Vries',
+        3: 'Sophie Janssen'
+    }
+    
+    return render_template('booking_confirmation.html', 
+                         booking=booking,
+                         photographer_name=photographer_names.get(booking.photographer_id, 'Unknown'))
 
 @main.route('/admin/add-availability', methods=['GET', 'POST'])
 def add_availability():

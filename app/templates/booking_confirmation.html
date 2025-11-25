@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed - De Kodak</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #fafbfc;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 80px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .nav-links a {
+            margin-left: 30px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 600px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+            padding: 40px;
+            text-align: center;
+        }
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #4caf50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+        .checkmark::after {
+            content: '✓';
+            font-size: 50px;
+            color: #fff;
+        }
+        h1 {
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        .booking-details {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .detail-value {
+            color: #666;
+        }
+        .btn {
+            display: inline-block;
+            background: #1E88E5;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background: #1565C0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">De Kodak</div>
+        <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">HOME</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="checkmark"></div>
+        <h1>Booking Bevestigd!</h1>
+        <p class="subtitle">Je boeking is succesvol opgeslagen. De fotograaf neemt binnenkort contact met je op.</p>
+
+        <div class="booking-details">
+            <div class="detail-row">
+                <span class="detail-label">Booking ID:</span>
+                <span class="detail-value">{{ booking.id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Fotograaf:</span>
+                <span class="detail-value">{{ photographer_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Datum & Tijd:</span>
+                <span class="detail-value">{{ booking.booking_date.strftime('%d-%m-%Y om %H:%M') }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{ booking.type }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">{{ booking.status }}</span>
+            </div>
+            {% if booking.description %}
+            <div class="detail-row">
+                <span class="detail-label">Notities:</span>
+                <span class="detail-value">{{ booking.description }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <a href="{{ url_for('main.index') }}" class="btn">Terug naar Home</a>
+    </div>
+</body>
+</html>
