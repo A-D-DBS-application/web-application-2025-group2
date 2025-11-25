@@ -191,3 +191,88 @@ def add_availability():
     
     photographers = Photographer.query.all()
     return render_template('add_availability.html', photographers=photographers)
+
+@main.route('/bookings')
+def bookings():
+    if 'user_id' not in session:
+        flash('Please log in to view bookings.')
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    
+    # If user is a photographer, show their bookings
+    if user.role == 'photographer':
+        user_bookings = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    # If user is a client, show their bookings
+    else:
+        user_bookings = Booking.query.filter_by(client_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    
+    return render_template('bookings.html', bookings=user_bookings, user=user)
+
+
+@main.route('/bookings/<booking_id>')
+def booking_detail(booking_id):
+    if 'user_id' not in session:
+        flash('Please log in to view booking details.')
+        return redirect(url_for('main.login'))
+    
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security: ensure user can only view their own bookings
+    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
+        flash('You do not have permission to view this booking.')
+        return redirect(url_for('main.bookings'))
+    
+    photographer = Photographer.query.get(booking.photographer_id)
+    client = User.query.get(booking.client_id)
+    
+    return render_template('booking_detail.html', booking=booking, photographer=photographer, client=client)
+
+
+@main.route('/bookings/<booking_id>/cancel', methods=['POST'])
+def cancel_booking(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Only client or photographer can cancel
+    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
+        flash('You do not have permission to cancel this booking.')
+        return redirect(url_for('main.bookings'))
+    
+    # Delete the booking
+    db.session.delete(booking)
+    db.session.commit()
+    
+    flash('Booking cancelled successfully.')
+    return redirect(url_for('main.bookings'))
+
+
+@main.route('/bookings/<booking_id>/update', methods=['POST'])
+def update_booking(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Only photographer or client can update
+    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
+        flash('You do not have permission to update this booking.')
+        return redirect(url_for('main.bookings'))
+    
+    # Update booking details
+    new_date = request.form.get('date')
+    new_time = request.form.get('time')
+    new_description = request.form.get('description')
+    
+    if new_date and new_time:
+        booking.booking_date_and_time = datetime.strptime(f"{new_date} {new_time}", '%Y-%m-%d %H:%M')
+    if new_description:
+        booking.description = new_description
+    
+    booking.updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    flash('Booking updated successfully.')
+    return redirect(url_for('main.booking_detail', booking_id=booking_id))

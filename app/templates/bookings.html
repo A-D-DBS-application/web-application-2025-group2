@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - De Kodak</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #fafbfc;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 80px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .nav-links a {
+            margin-left: 30px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .booking-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .booking-info h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .booking-info p {
+            color: #666;
+            margin: 5px 0;
+        }
+        .booking-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #1E88E5;
+            color: #fff;
+        }
+        .btn-danger {
+            background: #f44336;
+            color: #fff;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .no-bookings {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">De Kodak</div>
+        <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">HOME</a>
+            <a href="{{ url_for('main.bookings') }}">BOOKINGS</a>
+            {% if session.get('user_id') %}
+                <form action="{{ url_for('main.logout') }}" method="POST" style="display:inline;">
+                    <button type="submit" style="background:none;border:none;color:#333;font-weight:500;cursor:pointer;">LOGOUT</button>
+                </form>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>{% if user.role == 'photographer' %}My Client Bookings{% else %}My Bookings{% endif %}</h1>
+
+        {% if bookings %}
+            {% for booking in bookings %}
+            <div class="booking-card">
+                <div class="booking-info">
+                    <h3>{{ booking.type|title }} Session</h3>
+                    <p><strong>Date:</strong> {{ booking.booking_date_and_time.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    {% if user.role == 'photographer' %}
+                        <p><strong>Client ID:</strong> {{ booking.client_id }}</p>
+                    {% else %}
+                        <p><strong>Photographer ID:</strong> {{ booking.photographer_id }}</p>
+                    {% endif %}
+                    <p><strong>Description:</strong> {{ booking.description or 'No description provided' }}</p>
+                    <p style="font-size: 0.9em; color: #999;">Created: {{ booking.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+                <div class="booking-actions">
+                    <a href="{{ url_for('main.booking_detail', booking_id=booking.id) }}" class="btn btn-primary">View Details</a>
+                    <form action="{{ url_for('main.cancel_booking', booking_id=booking.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                        <button type="submit" class="btn btn-danger">Cancel</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-bookings">
+                <h2>No bookings yet</h2>
+                <p>{% if user.role == 'photographer' %}You don't have any client bookings yet.{% else %}You haven't made any bookings yet.{% endif %}</p>
+                {% if user.role != 'photographer' %}
+                    <a href="{{ url_for('main.book') }}" class="btn btn-primary" style="margin-top: 20px;">Book a Photographer</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

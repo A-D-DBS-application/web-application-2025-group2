@@ -38,6 +38,7 @@ class Booking(db.Model):
     booking_date_and_time = db.Column(db.DateTime, nullable=False)
     type = db.Column(db.Text, nullable=True)
     description = db.Column(db.Text, nullable=True)
+    status = db.Column(db.Text, default='pending')  # pending, confirmed, completed, cancelled
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=True)
 
