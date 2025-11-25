@@ -23,26 +23,6 @@ class Category(db.Model):
         return f'<Category {self.name}>'
 
 
-class Client(db.Model):
-    __tablename__ = 'clients'
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(32), default='user')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f'<Client {self.id} {self.email}>'
-
-
-class Photographer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f'<Photographer {self.id}>'
-
 
 class Booking(db.Model):
     __tablename__ = 'bookings'
@@ -122,10 +102,4 @@ class Notification(db.Model):
         return f'<Notification {self.notification_id}>'
 
 
-class KVStore(db.Model):
-    key = db.Column(db.String(255), primary_key=True)
-    value = db.Column(db.JSON, nullable=True)
-
-    def __repr__(self):
-        return f'<KVStore {self.key}>'
 
