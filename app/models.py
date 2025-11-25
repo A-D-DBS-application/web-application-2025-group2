@@ -35,10 +35,9 @@ class Booking(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     client_id = db.Column(db.Integer, nullable=True)
     photographer_id = db.Column(db.Integer, nullable=True)
-    booking_date_and_time = db.Column(db.DateTime, nullable=False)  # Changed from booking_date
-    type = db.Column(db.String(120), nullable=True)
+    booking_date_and_time = db.Column(db.DateTime, nullable=False)
+    type = db.Column(db.Text, nullable=True)
     description = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(50), nullable=False, default='pending')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=True)
 

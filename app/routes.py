@@ -111,10 +111,10 @@ def book():
         new_booking = Booking(
             client_id=session['user_id'],
             photographer_id=photographer_id,
-            booking_date_and_time=booking_datetime,  # Changed from booking_date
+            booking_date_and_time=booking_datetime,
             type='session',
-            description=notes,
-            status='confirmed'
+            description=notes
+            # Removed status - column doesn't exist
         )
         db.session.add(new_booking)
         db.session.commit()
