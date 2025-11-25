@@ -33,6 +33,7 @@ def register():
         else:
             hashed_pw = generate_password_hash(password)
             new_user = User(
+                username=email,  # Use email as username
                 name=name,
                 email=email,
                 password_hash=hashed_pw,
