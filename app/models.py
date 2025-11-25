@@ -33,17 +33,15 @@ class Category(db.Model):
 class Booking(db.Model):
     __tablename__ = 'bookings'
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    client_id = db.Column(db.Integer, nullable=True)  # Changed from user_id, int4 type
-    photographer_id = db.Column(db.Integer, nullable=True)  # Changed to nullable
-    booking_date = db.Column(db.DateTime, nullable=False)
+    client_id = db.Column(db.Integer, nullable=True)
+    photographer_id = db.Column(db.Integer, nullable=True)
+    booking_date_and_time = db.Column(db.DateTime, nullable=False)  # Changed from booking_date
     type = db.Column(db.String(120), nullable=True)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(50), nullable=False, default='pending')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=True)
 
-    # Remove the relationship for now since client_id is int4, not a foreign key to clients table
-    
     def __repr__(self):
         return f'<Booking {self.id}>'
 

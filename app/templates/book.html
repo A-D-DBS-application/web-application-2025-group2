@@ -47,13 +47,16 @@
             margin-bottom: 32px;
             color: #333;
         }
-        .success-message {
-            background: #4caf50;
+        .flash-message {
+            background: #f44336;
             color: #fff;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
+        }
+        .flash-message.success {
+            background: #4caf50;
         }
         label {
             display: block;
@@ -102,29 +105,28 @@
     <div class="container">
         <h1>Book a Photographer</h1>
         
-        {% if success %}
-            <div class="success-message">{{ success }}</div>
-        {% endif %}
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
         <form method="POST">
             <label for="photographer">Select Photographer</label>
-            <select id="photographer" name="photographer_id" required onchange="loadPhotographerSlots()">
+            <select id="photographer" name="photographer" required>
                 <option value="">Choose a photographer...</option>
-                {% for pid, photo in photographers.items() %}
-                    <option value="{{ pid }}">{{ photo.name }}</option>
-                {% endfor %}
+                <option value="emma">Emma van Berg</option>
+                <option value="lars">Lars de Vries</option>
+                <option value="sophie">Sophie Janssen</option>
             </select>
 
-            <label for="slot">Available Date & Time</label>
-            <select id="slot" name="slot_id" required>
-                <option value="">Select a photographer first...</option>
-            </select>
+            <label for="date">Preferred Date</label>
+            <input type="date" id="date" name="date" required>
 
-            <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" placeholder="John Doe" required>
-
-            <label for="email">Your Email</label>
-            <input type="email" id="email" name="email" placeholder="your@email.com" required>
+            <label for="time">Preferred Time</label>
+            <input type="time" id="time" name="time" required>
 
             <label for="notes">Additional Notes</label>
             <textarea id="notes" name="notes" placeholder="Tell us about your photography needs..."></textarea>
@@ -132,45 +134,5 @@
             <button type="submit" class="btn">Submit Booking Request</button>
         </form>
     </div>
-
-    <script>
-        const availabilityData = {{ availability|safe }};
-
-        function loadPhotographerSlots() {
-            const photographerId = document.getElementById('photographer').value;
-            const slotSelect = document.getElementById('slot');
-            
-            // Clear previous options
-            slotSelect.innerHTML = '<option value="">Loading...</option>';
-            
-            if (!photographerId) {
-                slotSelect.innerHTML = '<option value="">Select a photographer first...</option>';
-                return;
-            }
-            
-            // Fetch slots from API
-            fetch(`/api/photographer-slots/${photographerId}`)
-                .then(response => response.json())
-                .then(slots => {
-                    slotSelect.innerHTML = '<option value="">Select a time slot...</option>';
-                    
-                    if (slots.length === 0) {
-                        slotSelect.innerHTML = '<option value="">No available slots for this photographer</option>';
-                        return;
-                    }
-                    
-                    slots.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = slot.id;
-                        option.textContent = slot.display;
-                        slotSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading slots:', error);
-                    slotSelect.innerHTML = '<option value="">Error loading slots</option>';
-                });
-        }
-    </script>
 </body>
 </html>
