@@ -127,5 +127,5 @@ class KVStore(db.Model):
     value = db.Column(db.JSON, nullable=True)
 
     def __repr__(self):
-        return f'<KVStore {self.key}>
+        return f'<KVStore {self.key}>'
 
