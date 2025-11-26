@@ -1,29 +1,39 @@
 # app/routes.py
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Booking, PhotographerAvailability, Photo
 from datetime import datetime, timedelta
 import json
+import os
+import uuid
+from supabase import create_client, Client
 
 main = Blueprint('main', __name__)
+
+def get_supabase_client() -> Client:
+    """Create and return Supabase client"""
+    url = current_app.config['SUPABASE_URL']
+    key = current_app.config['SUPABASE_KEY']
+    return create_client(url, key)
 
 @main.route('/')
 def index():
     # Get photographers from database
     photographers = User.query.filter_by(role='photographer').limit(3).all()
     
+    # Get photos for each photographer
+    photographer_photos = {}
+    for photographer in photographers:
+        photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).limit(4).all()
+        photographer_photos[photographer.id] = photos
+    
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
-        # Redirect photographers to their dashboard
-        if user and user.role == 'photographer':
-            return redirect(url_for('main.photographer_dashboard'))
-        # Redirect regular users to client dashboard
-        elif user and user.role == 'user':
-            return redirect(url_for('main.client_dashboard'))
-        return render_template('index.html', username=user.name if user else None, photographers=photographers)
-    return render_template('index.html', username=None, photographers=photographers)
+        return render_template('index.html', username=user.name if user else None, user=user, photographers=photographers, photographer_photos=photographer_photos)
+    return render_template('index.html', username=None, user=None, photographers=photographers, photographer_photos=photographer_photos)
 
 @main.route('/register', methods=['GET', 'POST'])
 def register():
@@ -470,25 +480,66 @@ def upload_photos(booking_id):
     client = User.query.get(booking.client_id)
     
     if request.method == 'POST':
-        photo_url = request.form.get('photo_url')
         photo_title = request.form.get('photo_title', '')
         
-        if not photo_url:
-            flash('Photo URL is required.')
+        # Check if file was uploaded
+        if 'photo_file' not in request.files:
+            flash('No file selected.')
             return redirect(url_for('main.upload_photos', booking_id=booking_id))
         
-        # Create photo record
-        new_photo = Photo(
-            user_id=booking.client_id,  # Photo belongs to the client
-            photographer_id=user.id,     # Taken by this photographer
-            booking_id=booking.id,
-            image_url=photo_url,
-            title=photo_title
-        )
-        db.session.add(new_photo)
-        db.session.commit()
+        file = request.files['photo_file']
         
-        flash('Photo uploaded successfully!')
+        if file.filename == '':
+            flash('No file selected.')
+            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+        
+        # Validate file extension
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            flash('Invalid file type. Please upload an image (PNG, JPG, JPEG, GIF, WEBP).')
+            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+        
+        try:
+            # Generate unique filename
+            unique_filename = f"{uuid.uuid4()}.{file_ext}"
+            file_path = f"bookings/{booking_id}/{unique_filename}"
+            
+            # Upload to Supabase Storage
+            supabase = get_supabase_client()
+            bucket_name = current_app.config['SUPABASE_STORAGE_BUCKET']
+            
+            # Read file content
+            file_content = file.read()
+            
+            # Upload file
+            response = supabase.storage.from_(bucket_name).upload(
+                file_path,
+                file_content,
+                file_options={"content-type": file.content_type}
+            )
+            
+            # Get public URL
+            photo_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
+            
+            # Create photo record
+            new_photo = Photo(
+                user_id=booking.client_id,
+                photographer_id=user.id,
+                booking_id=booking.id,
+                image_url=photo_url,
+                title=photo_title or file.filename
+            )
+            db.session.add(new_photo)
+            db.session.commit()
+            
+            flash('Photo uploaded successfully!')
+            
+        except Exception as e:
+            flash(f'Error uploading photo: {str(e)}')
+            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+        
         return redirect(url_for('main.upload_photos', booking_id=booking_id))
     
     # Get existing photos for this booking
@@ -499,3 +550,53 @@ def upload_photos(booking_id):
                          booking=booking,
                          client=client,
                          existing_photos=existing_photos)
+
+@main.route('/dashboard/photographer/delete-photo/<int:photo_id>', methods=['POST'])
+def delete_photo(photo_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user or user.role != 'photographer':
+        flash('Access denied. Photographers only.')
+        return redirect(url_for('main.index'))
+    
+    # Get the photo
+    photo = Photo.query.get_or_404(photo_id)
+    
+    # Security check: ensure photographer owns this photo
+    if photo.photographer_id != user.id:
+        flash('You can only delete photos you have uploaded.')
+        return redirect(url_for('main.photographer_dashboard'))
+    
+    # Store booking_id for redirect
+    booking_id = photo.booking_id
+    
+    # Delete from Supabase Storage if it's a storage URL
+    try:
+        if 'supabase.co/storage' in photo.image_url:
+            # Extract file path from URL
+            # URL format: https://PROJECT.supabase.co/storage/v1/object/public/BUCKET/PATH
+            parts = photo.image_url.split('/storage/v1/object/public/')
+            if len(parts) == 2:
+                bucket_and_path = parts[1].split('/', 1)
+                if len(bucket_and_path) == 2:
+                    bucket_name = bucket_and_path[0]
+                    file_path = bucket_and_path[1]
+                    
+                    supabase = get_supabase_client()
+                    supabase.storage.from_(bucket_name).remove([file_path])
+    except Exception as e:
+        # If deletion from storage fails, continue with database deletion
+        print(f"Error deleting from storage: {str(e)}")
+    
+    # Delete from database
+    db.session.delete(photo)
+    db.session.commit()
+    
+    flash('Photo deleted successfully!')
+    
+    # Redirect back to upload page if booking_id exists, otherwise to dashboard
+    if booking_id:
+        return redirect(url_for('main.upload_photos', booking_id=booking_id))
+    return redirect(url_for('main.photographer_dashboard'))

@@ -18,3 +18,8 @@ class Config:
         'pool_pre_ping': True,
         'pool_recycle': 300,
     }
+    
+    # Supabase Storage
+    SUPABASE_URL = os.getenv('SUPABASE_URL')
+    SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+    SUPABASE_STORAGE_BUCKET = 'photos'  # Name of the storage bucket

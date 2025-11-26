@@ -151,6 +151,8 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
         }
         .photographer-card img {
             width: 100%;
@@ -159,6 +161,9 @@
         }
         .photographer-info {
             padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
         .photographer-info h3 {
             font-size: 1.2rem;
@@ -179,6 +184,23 @@
             font-size: 0.9rem;
             margin-bottom: 16px;
         }
+        .photographer-photos {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .photographer-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .photo-count {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
         .btn-view {
             width: 100%;
             background: #1E88E5;
@@ -188,6 +210,10 @@
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            margin-top: auto;
         }
         .btn-view:hover {
             background: #1565C0;
@@ -248,7 +274,11 @@
         <div class="nav-links">
             <a href="{{ url_for('main.index') }}">HOME</a>
             {% if username %}
-                <a href="{{ url_for('main.bookings') }}">MY BOOKINGS</a>
+                {% if user and user.role == 'photographer' %}
+                    <a href="{{ url_for('main.photographer_dashboard') }}">DASHBOARD</a>
+                {% elif user and user.role == 'user' %}
+                    <a href="{{ url_for('main.client_dashboard') }}">DASHBOARD</a>
+                {% endif %}
                 <a href="{{ url_for('main.book') }}">BOOK NOW</a>
             {% endif %}
             {% if username %}
@@ -316,6 +346,18 @@
                         <h3>{{ photographer.name }}</h3>
                         <p class="location">📧 {{ photographer.email }}</p>
                         <p class="category">📷 Professional Photographer</p>
+                        
+                        {% if photographer_photos.get(photographer.id) %}
+                            <p class="photo-count">{{ photographer_photos[photographer.id]|length }} photo(s) in portfolio</p>
+                            <div class="photographer-photos">
+                                {% for photo in photographer_photos[photographer.id][:4] %}
+                                <img src="{{ photo.image_url }}" alt="{{ photo.title or 'Photo' }}" onerror="this.src='https://via.placeholder.com/200x200?text=Photo+Not+Available'">
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="photo-count" style="color: #999;">No photos yet</p>
+                        {% endif %}
+                        
                         <a href="{{ url_for('main.book') }}" class="btn-view">Book Now</a>
                     </div>
                 </div>

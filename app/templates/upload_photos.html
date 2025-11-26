@@ -179,6 +179,21 @@
             font-size: 13px;
             margin-top: 5px;
         }
+        .btn-delete-photo {
+            background: #d32f2f;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        .btn-delete-photo:hover {
+            background: #b71c1c;
+        }
     </style>
 </head>
 <body>
@@ -186,6 +201,7 @@
         <div class="logo">De Kodak</div>
         <div class="nav-links">
             <span>Welcome, {{ user.name }}! 📷</span>
+            <a href="{{ url_for('main.index') }}">Home</a>
             <a href="{{ url_for('main.photographer_dashboard') }}">Dashboard</a>
             <form method="POST" action="{{ url_for('main.logout') }}" style="display:inline;">
                 <button type="submit">Logout</button>
@@ -217,11 +233,11 @@
             {% endif %}
         </div>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
-                <label for="photo_url">Photo URL *</label>
-                <input type="url" id="photo_url" name="photo_url" required placeholder="https://example.com/photo.jpg">
-                <p class="helper-text">Enter the URL of the photo (e.g., from Unsplash, Imgur, or your own hosting)</p>
+                <label for="photo_file">Select Photo *</label>
+                <input type="file" id="photo_file" name="photo_file" accept="image/*" required>
+                <p class="helper-text">Select an image file from your computer (PNG, JPG, JPEG, GIF, WEBP)</p>
             </div>
             
             <div class="form-group">
@@ -238,10 +254,13 @@
         <div class="photos-grid">
             {% for photo in existing_photos %}
             <div class="photo-card">
-                <img src="{{ photo.image_url }}" alt="{{ photo.title or 'Photo' }}">
+                <img src="{{ photo.image_url }}" alt="{{ photo.title or 'Photo' }}" onerror="this.src='https://via.placeholder.com/200x200?text=Photo+Not+Available'">
                 <div class="photo-info">
                     <div class="photo-title">{{ photo.title or 'Untitled' }}</div>
                     <div class="photo-date">{{ photo.uploaded_at.strftime('%d-%m-%Y %H:%M') }}</div>
+                    <form method="POST" action="{{ url_for('main.delete_photo', photo_id=photo.photo_id) }}" style="margin-top: 10px;">
+                        <button type="submit" class="btn-delete-photo" onclick="return confirm('Are you sure you want to delete this photo?');">Delete</button>
+                    </form>
                 </div>
             </div>
             {% endfor %}
