@@ -245,26 +245,6 @@ def booking_detail(booking_id):
     return render_template('booking_detail.html', booking=booking, photographer=photographer, client=client)
 
 
-@main.route('/bookings/<booking_id>/cancel', methods=['POST'])
-def cancel_booking(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    booking = Booking.query.get_or_404(booking_id)
-    
-    # Only client or photographer can cancel
-    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
-        flash('You do not have permission to cancel this booking.')
-        return redirect(url_for('main.bookings'))
-    
-    # Delete the booking
-    db.session.delete(booking)
-    db.session.commit()
-    
-    flash('Booking cancelled successfully.')
-    return redirect(url_for('main.bookings'))
-
-
 @main.route('/bookings/<booking_id>/update', methods=['POST'])
 def update_booking(booking_id):
     if 'user_id' not in session:
@@ -600,3 +580,39 @@ def delete_photo(photo_id):
     if booking_id:
         return redirect(url_for('main.upload_photos', booking_id=booking_id))
     return redirect(url_for('main.photographer_dashboard'))
+
+@main.route('/booking/cancel/<booking_id>', methods=['POST'])
+def cancel_booking(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return redirect(url_for('main.login'))
+    
+    # Get the booking
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security check: only the client can cancel their booking
+    if booking.client_id != user.id:
+        flash('You can only cancel your own bookings.')
+        return redirect(url_for('main.client_dashboard'))
+    
+    # Free up the availability slot
+    if booking.booking_date_and_time:
+        # Find the corresponding availability slot
+        slot = PhotographerAvailability.query.filter_by(
+            photographer_id=booking.photographer_id,
+            available_date=booking.booking_date_and_time.date(),
+            is_available=False
+        ).first()
+        
+        if slot:
+            slot.is_available = True
+    
+    # Delete the booking
+    db.session.delete(booking)
+    db.session.commit()
+    
+    flash('Booking cancelled successfully!')
+    return redirect(url_for('main.client_dashboard'))
