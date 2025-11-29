@@ -616,3 +616,162 @@ def cancel_booking(booking_id):
     
     flash('Booking cancelled successfully!')
     return redirect(url_for('main.client_dashboard'))
+
+@main.route('/auth/register', methods=['POST'])
+def register_api():
+    data = request.get_json()
+    
+    existing_user = User.query.filter_by(email=data['email']).first()
+    if existing_user:
+        return jsonify({'error': 'Email already registered'}), 400
+    
+    new_user = User(
+        username=data['name'],
+        email=data['email'],
+        password_hash=generate_password_hash(data['password']),
+        role=data.get('role', 'client')
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return jsonify({'message': 'Registration successful', 'user_id': new_user.id}), 201
+
+@main.route('/auth/login', methods=['POST'])
+def login_api():
+    data = request.get_json()
+    
+    user = User.query.filter_by(email=data['email']).first()
+    
+    if user and check_password_hash(user.password_hash, data['password']):
+        session['user_id'] = user.id
+        session['user_name'] = user.username
+        session['user_role'] = user.role
+        
+        return jsonify({
+            'message': 'Login successful',
+            'user': {
+                'id': user.id,
+                'name': user.username,
+                'email': user.email,
+                'role': user.role
+            }
+        }), 200
+    
+    return jsonify({'error': 'Invalid credentials'}), 401
+
+@main.route('/auth/logout', methods=['POST'])
+def logout_api():
+    session.clear()
+    return jsonify({'message': 'Logged out successfully'}), 200
+
+@main.route('/auth/me', methods=['GET'])
+def get_current_user_api():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user = User.query.get(session['user_id'])
+    return jsonify({
+        'id': user.id,
+        'name': user.username,
+        'email': user.email,
+        'role': user.role
+    }), 200
+
+@main.route('/photographers', methods=['GET'])
+def get_photographers_api():
+    photographers = User.query.filter_by(role='photographer').all()
+    
+    return jsonify([{
+        'id': p.id,
+        'name': p.username,
+        'bio': p.bio,
+        'location': p.location,
+        'price_per_hour': float(p.price_per_hour) if p.price_per_hour else None,
+        'profile_picture': p.profile_picture,
+        'portfolio_url': p.portfolio_url
+    } for p in photographers]), 200
+
+@main.route('/photographers/<int:photographer_id>', methods=['GET'])
+def get_photographer_api(photographer_id):
+    photographer = User.query.get_or_404(photographer_id)
+    
+    return jsonify({
+        'id': photographer.id,
+        'name': photographer.username,
+        'email': photographer.email,
+        'bio': photographer.bio,
+        'location': photographer.location,
+        'price_per_hour': float(photographer.price_per_hour) if photographer.price_per_hour else None,
+        'profile_picture': photographer.profile_picture,
+        'portfolio_url': photographer.portfolio_url,
+        'phone': photographer.phone
+    }), 200
+
+@main.route('/bookings', methods=['GET', 'POST'])
+def bookings_api():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    if request.method == 'POST':
+        data = request.get_json()
+        
+        booking_datetime = datetime.fromisoformat(data['booking_date_and_time'])
+        
+        # Check availability
+        existing = Booking.query.filter_by(
+            photographer_id=data['photographer_id'],
+            booking_date_and_time=booking_datetime
+        ).first()
+        
+        if existing:
+            return jsonify({'error': 'Time slot already booked'}), 400
+        
+        new_booking = Booking(
+            client_id=session['user_id'],
+            photographer_id=data['photographer_id'],
+            booking_date_and_time=booking_datetime,
+            type=data.get('type', 'session'),
+            description=data.get('description', ''),
+            status='confirmed'
+        )
+        db.session.add(new_booking)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Booking confirmed',
+            'booking_id': new_booking.id
+        }), 201
+    
+    # GET - List bookings
+    user = User.query.get(session['user_id'])
+    
+    if user.role == 'photographer':
+        user_bookings = Booking.query.filter_by(photographer_id=user.id).all()
+    else:
+        user_bookings = Booking.query.filter_by(client_id=user.id).all()
+    
+    return jsonify([{
+        'id': b.id,
+        'client_id': b.client_id,
+        'photographer_id': b.photographer_id,
+        'booking_date_and_time': b.booking_date_and_time.isoformat(),
+        'type': b.type,
+        'description': b.description,
+        'status': b.status,
+        'created_at': b.created_at.isoformat()
+    } for b in user_bookings]), 200
+
+@main.route('/bookings/<booking_id>', methods=['DELETE'])
+def cancel_booking_api(booking_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    booking = Booking.query.get_or_404(booking_id)
+    
+    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    db.session.delete(booking)
+    db.session.commit()
+    
+    return jsonify({'message': 'Booking cancelled'}), 200
