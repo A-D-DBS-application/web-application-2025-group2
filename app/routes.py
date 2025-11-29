@@ -516,25 +516,26 @@ def upload_photos(booking_id):
         uploaded_count = 0
         
         for file in files:
-            if file.filename == '':
-                continue
-                
-            file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
-            
-            if file_ext not in allowed_extensions:
-                flash(f'Skipped {file.filename}: Invalid file type.')
-                continue
-            
             try:
-                # Read file content and encode as base64 to store in database
-                import base64
+                # Generate unique filename
+                file_ext = file.filename.rsplit('.', 1)[1].lower()
+                unique_filename = f"{uuid.uuid4()}.{file_ext}"
+                file_path = f"bookings/{booking_id}/{unique_filename}"
+                
+                # Upload to Supabase Storage
+                supabase = get_supabase_client()
                 file_content = file.read()
-                file_base64 = base64.b64encode(file_content).decode('utf-8')
                 
-                # Create data URL (stores image data directly in the database)
-                photo_url = f"data:{file.content_type};base64,{file_base64}"
+                supabase.storage.from_('photos').upload(
+                    file_path,
+                    file_content,
+                    {'content-type': file.content_type}
+                )
                 
-                # Create photo record
+                # Get public URL
+                photo_url = supabase.storage.from_('photos').get_public_url(file_path)
+                
+                # Create photo record with storage URL
                 new_photo = Photo(
                     user_id=booking.client_id,
                     photographer_id=user.id,
