@@ -1,211 +1,149 @@
-<!-- templates/index.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Culex - Professional Photography Booking</title>
-    <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #ffffff;
-            color: #1f2937;
-        }
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 80px;
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1f2937;
-        }
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
-        .nav-links a {
-            text-decoration: none;
-            color: #4b5563;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        .nav-links a:hover {
-            color: #2563eb;
-        }
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-        .btn-logout {
-            background: none;
-            border: none;
-            color: #4b5563;
-            font-weight: 500;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .btn-logout:hover {
-            color: #2563eb;
-        }
-        .hero {
-            text-align: center;
-            padding: 100px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-        .hero p {
-            font-size: 1.25rem;
-            margin-bottom: 40px;
-            opacity: 0.95;
-        }
-        .photographers-section {
-            padding: 80px 20px;
-            background: #f9fafb;
-        }
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 50px;
-            color: #1f2937;
-        }
-        .photographer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .photographer-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .photographer-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-        .photographer-card img {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-        }
-        .photographer-info {
-            padding: 20px;
-        }
-        .photographer-info h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            color: #1f2937;
-        }
-        .photographer-info p {
-            color: #6b7280;
-            margin-bottom: 15px;
-        }
-        .quick-actions {
-            padding: 80px 20px;
-            background: white;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 40px;
-        }
-        .btn-secondary {
-            background: white;
-            color: #2563eb;
-            padding: 15px 40px;
-            border-radius: 8px;
-            border: 2px solid #2563eb;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-secondary:hover {
-            background: #eff6ff;
-        }
-    </style>
-</head>
-<body>
-    <nav>
-        <div class="logo">Culex</div>
-        <div class="nav-links">
-            <a href="{{ url_for('main.index') }}">Home</a>
-            <a href="{{ url_for('main.book') }}">Find Photographers</a>
-            {% if username %}
-                <a href="{{ url_for('main.bookings') }}">My Bookings</a>
-                <span style="margin-left: 20px; color: #666;">Hello, {{ username }}!</span>
-                <form action="{{ url_for('main.logout') }}" method="POST" style="display:inline;">
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
-            {% else %}
-                <a href="{{ url_for('main.login') }}">Sign In</a>
-                <a href="{{ url_for('main.register') }}" class="btn-primary">Get Started</a>
-            {% endif %}
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <section class="hero">
-        <h1>Find Your Perfect Photographer</h1>
-        <p>Connect with talented photographers for your special moments</p>
-        <a href="{{ url_for('main.book') }}" class="btn-primary" style="font-size: 1.1rem; padding: 15px 35px;">Find Photographers →</a>
-    </section>
+{% block title %}Culex - Professional Photography Booking{% endblock %}
 
-    {% if username %}
-    <section class="quick-actions">
-        <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
-            <h2 class="section-title">Quick Actions</h2>
-            <div class="action-buttons">
-                <a href="{{ url_for('main.bookings') }}" class="btn-primary">View My Bookings</a>
-                <a href="{{ url_for('main.book') }}" class="btn-secondary">Book a Photographer</a>
+{% block extra_styles %}
+<style>
+    .hero { min-height: 700px; display: flex; align-items: center; overflow: hidden; background: #FFFFFF; }
+    .hero-grid { max-width: 1280px; margin: 0 auto; padding: 6rem 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+    .hero h1 { font-size: 4rem; font-weight: 800; color: #1E293B; margin-bottom: 2rem; line-height: 1.1; letter-spacing: -0.02em; }
+    .hero h2 { font-size: 1.5rem; font-weight: 600; color: #475569; margin-bottom: 1.5rem; line-height: 1.5; }
+    .hero p { font-size: 1.125rem; color: #64748B; margin-bottom: 3rem; line-height: 1.7; }
+    .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .dashboard-mockup { border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; background: #F8FAFC; padding: 2rem; }
+    .calendar-header { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #E2E8F0; }
+    .calendar-header-title { font-size: 1.125rem; font-weight: 600; color: #1E293B; margin-bottom: 0.5rem; }
+    .calendar-header-date { font-size: 0.875rem; color: #64748B; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-bottom: 1.5rem; }
+    .calendar-day-label { font-size: 0.75rem; font-weight: 600; color: #64748B; text-align: center; padding: 0.5rem; }
+    .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 500; background: #F8FAFC; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .calendar-day.booked { background: #2563EB; color: #FFF; }
+    .calendar-day:hover { background: #E0E7FF; }
+    .booking-list-title { font-size: 0.875rem; font-weight: 600; color: #1E293B; margin-bottom: 0.75rem; }
+    .booking-item { padding: 0.75rem; background: #F8FAFC; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid #E2E8F0; }
+    .booking-client { font-size: 0.875rem; font-weight: 600; color: #1E293B; margin-bottom: 0.25rem; }
+    .booking-details { font-size: 0.75rem; color: #64748B; display: flex; gap: 1rem; }
+    .section { padding: 6rem 2rem; background: #FFFFFF; }
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .section-title { font-size: 2.5rem; font-weight: 700; color: #1E293B; margin-bottom: 1rem; }
+    .section-subtitle { font-size: 1.125rem; color: #475569; max-width: 600px; margin: 0 auto; }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem; max-width: 1280px; margin: 0 auto; }
+    .step-card { background: #FFF; border-radius: 16px; padding: 2.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; transition: all 0.3s; }
+    .step-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); border-color: #2563EB; }
+    .step-number { width: 60px; height: 60px; background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: #FFF; margin-bottom: 1.5rem; }
+    .step-title { font-size: 1.25rem; font-weight: 600; color: #1E293B; margin-bottom: 0.75rem; }
+    .step-description { font-size: 0.9375rem; color: #64748B; line-height: 1.6; }
+    .photographer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1280px; margin: 0 auto; }
+    .photographer-card { background: #FFF; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; transition: all 0.3s; }
+    .photographer-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .photographer-image { width: 100%; height: 250px; background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 3rem; }
+    .photographer-info { padding: 1.5rem; }
+    .photographer-name { font-size: 1.25rem; font-weight: 600; color: #1E293B; margin-bottom: 0.5rem; }
+    .photographer-specialty { font-size: 0.875rem; color: #64748B; margin-bottom: 1rem; }
+    .photographer-rating { display: flex; gap: 0.25rem; margin-bottom: 1rem; }
+    .star { color: #FBBF24; font-size: 1rem; }
+    @media (max-width: 768px) {
+        .hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+        .hero h1 { font-size: 2.5rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-grid">
+        <div>
+            <h1>About You</h1>
+            <h2>You're a photographer who wants more time for your craft — not for emails, planning, or repetitive admin work.</h2>
+            <p>That's why we built an intelligent booking algorithm that automates your schedule, manages client requests, and sends confirmations. So you can focus on what truly matters: creating.</p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="location.href='#how-it-works'">Learn More</button>
+                <button class="btn btn-secondary" onclick="location.href='#how-it-works'">How It Works</button>
             </div>
         </div>
-    </section>
-    {% endif %}
+        <div class="dashboard-mockup">
+            <div class="calendar-header">
+                <div class="calendar-header-title">Your Schedule</div>
+                <div class="calendar-header-date">November 2025</div>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-day-label">Mo</div>
+                <div class="calendar-day-label">Tu</div>
+                <div class="calendar-day-label">We</div>
+                <div class="calendar-day-label">Th</div>
+                <div class="calendar-day-label">Fr</div>
+                <div class="calendar-day-label">Sa</div>
+                <div class="calendar-day-label">Su</div>
+                {% for day in range(1, 29) %}
+                <div class="calendar-day {% if day in [5, 12, 18, 23] %}booked{% endif %}">{{ day }}</div>
+                {% endfor %}
+            </div>
+            <div class="booking-list-title">Upcoming Bookings</div>
+            <div class="booking-item">
+                <div class="booking-client">Sarah Martinez</div>
+                <div class="booking-details"><span>2:00 PM</span><span>•</span><span>Portrait</span></div>
+            </div>
+            <div class="booking-item">
+                <div class="booking-client">James Wilson</div>
+                <div class="booking-details"><span>4:30 PM</span><span>•</span><span>Wedding</span></div>
+            </div>
+        </div>
+    </div>
+</section>
 
-    <section class="photographers-section">
+<!-- How It Works Section -->
+<section id="how-it-works" class="section">
+    <div class="section-header">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-subtitle">Book your perfect photographer in four simple steps</p>
+    </div>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3 class="step-title">Browse Photographers</h3>
+            <p class="step-description">Explore our curated list of professional photographers. Filter by style, location, and availability to find your perfect match.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3 class="step-title">View Portfolios</h3>
+            <p class="step-description">Review detailed portfolios, client reviews, and pricing information. See their best work and read authentic client experiences.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3 class="step-title">Book Your Session</h3>
+            <p class="step-description">Select your preferred date and time. Our intelligent system handles scheduling, confirmations, and all the details automatically.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <h3 class="step-title">Capture Memories</h3>
+            <p class="step-description">Show up and enjoy your session. Your photographer handles everything else, and you'll receive your photos within days.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Photographers Section -->
+<section class="section" style="background: #F8FAFC;">
+    <div class="section-header">
         <h2 class="section-title">Featured Photographers</h2>
-        <div class="photographer-grid">
-            {% for photographer in photographers %}
-            <div class="photographer-card">
-                <img src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400&h=250&fit=crop" alt="{{ photographer.name }}">
-                <div class="photographer-info">
-                    <h3>{{ photographer.name }}</h3>
-                    <p>{{ photographer.bio or 'Professional photographer' }}</p>
-                    <a href="{{ url_for('main.book') }}" class="btn-primary">Book Now</a>
+        <p class="section-subtitle">Discover talented photographers in your area</p>
+    </div>
+    <div class="photographer-grid">
+        {% for photographer in photographers %}
+        <div class="photographer-card">
+            <div class="photographer-image">📷</div>
+            <div class="photographer-info">
+                <div class="photographer-name">{{ photographer.name }}</div>
+                <div class="photographer-specialty">{{ photographer.specialty or 'Professional Photography' }}</div>
+                <div class="photographer-rating">
+                    {% for i in range(5) %}
+                    <span class="star">★</span>
+                    {% endfor %}
                 </div>
+                <a href="{{ url_for('main.book', photographer_id=photographer.id) }}" class="btn btn-primary" style="width: 100%; text-align: center;">Book Now</a>
             </div>
-            {% endfor %}
         </div>
-    </section>
-</body>
-</html>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -3,7 +3,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from app.models import db, User, Booking, PhotographerAvailability, Photo
+from app import db
+from app.models import User, Booking, PhotographerAvailability, Photo
 from datetime import datetime, timedelta
 import json
 import os
@@ -20,7 +21,10 @@ def get_supabase_client() -> Client:
 
 @main.route('/')
 def index():
+    # Get photographers from database
     photographers = User.query.filter_by(role='photographer').limit(3).all()
+    
+    # Get photos for each photographer
     photographer_photos = {}
     for photographer in photographers:
         photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).limit(4).all()
@@ -49,7 +53,7 @@ def register():
         else:
             hashed_pw = generate_password_hash(password)
             new_user = User(
-                username=email,
+                username=email,  # Use email as username
                 name=name,
                 email=email,
                 password_hash=hashed_pw,
@@ -73,6 +77,7 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             session['user_id'] = user.id
             session['user_name'] = user.name
+            session['user_role'] = user.role
             return redirect(url_for('main.index'))
         else:
             error = "Invalid email or password."
@@ -84,6 +89,30 @@ def logout():
     session.clear()
     flash('You have been logged out successfully.')
     return redirect(url_for('main.index'))
+
+@main.route('/photographers')
+def photographers():
+    """Browse all photographers"""
+    all_photographers = User.query.filter_by(role='photographer').all()
+    photographer_data = []
+    for photographer in all_photographers:
+        photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).limit(6).all()
+        photographer_data.append({
+            'photographer': photographer,
+            'photos': photos
+        })
+    return render_template('photographers.html', photographers=photographer_data)
+
+@main.route('/photographer/<int:photographer_id>')
+def photographer_profile(photographer_id):
+    """View photographer profile and book"""
+    photographer = User.query.get_or_404(photographer_id)
+    if photographer.role != 'photographer':
+        flash('Invalid photographer')
+        return redirect(url_for('main.index'))
+    
+    photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).all()
+    return render_template('photographer_profile.html', photographer=photographer, photos=photos)
 
 @main.route('/api/photographer-slots/<int:photographer_id>')
 def get_photographer_slots(photographer_id):
@@ -119,20 +148,24 @@ def book():
             flash('Please select a photographer and time slot.')
             return redirect(url_for('main.book'))
         
+        # Get the availability slot
         slot = PhotographerAvailability.query.get(slot_id)
         if not slot or slot.photographer_id != int(photographer_id):
             flash('Invalid time slot selected.')
             return redirect(url_for('main.book'))
         
+        # Check if slot is still available
         if not slot.is_available:
             flash('This time slot is no longer available.')
             return redirect(url_for('main.book'))
         
+        # Combine date and time
         booking_datetime = datetime.combine(
             slot.available_date, 
             datetime.strptime(slot.start_time, '%H:%M').time()
         )
         
+        # Create booking
         new_booking = Booking(
             client_id=session['user_id'],
             photographer_id=int(photographer_id),
@@ -141,11 +174,17 @@ def book():
             description=notes
         )
         db.session.add(new_booking)
+        
+        # Mark slot as unavailable
         slot.is_available = False
+        
         db.session.commit()
         
+        # Redirect to confirmation page
         return redirect(url_for('main.booking_confirmation', booking_id=new_booking.id))
     
+    # GET request - show form
+    # Get all users with photographer role
     photographers = User.query.filter_by(role='photographer').all()
     photographer_map = {p.id: {'name': p.name, 'id': p.id} for p in photographers}
     
@@ -161,101 +200,13 @@ def booking_confirmation(booking_id):
         flash('Booking not found.')
         return redirect(url_for('main.index'))
     
+    # Get photographer name from User table
     photographer = User.query.get(booking.photographer_id)
     photographer_name = photographer.name if photographer else 'Unknown'
     
     return render_template('booking_confirmation.html', 
                          booking=booking,
                          photographer_name=photographer_name)
-
-@main.route('/bookings')
-def bookings():
-    if 'user_id' not in session:
-        flash('Please log in to view bookings.')
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    
-    if user.role == 'photographer':
-        user_bookings = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
-    else:
-        user_bookings = Booking.query.filter_by(client_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
-    
-    return render_template('bookings.html', bookings=user_bookings, user=user)
-
-@main.route('/bookings/<booking_id>')
-def booking_detail(booking_id):
-    if 'user_id' not in session:
-        flash('Please log in to view booking details.')
-        return redirect(url_for('main.login'))
-    
-    booking = Booking.query.get_or_404(booking_id)
-    
-    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
-        flash('You do not have permission to view this booking.')
-        return redirect(url_for('main.bookings'))
-    
-    photographer = User.query.get(booking.photographer_id)
-    client = User.query.get(booking.client_id)
-    
-    return render_template('booking_detail.html', booking=booking, photographer=photographer, client=client)
-
-@main.route('/bookings/<booking_id>/update', methods=['POST'])
-def update_booking(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    booking = Booking.query.get_or_404(booking_id)
-    
-    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
-        flash('You do not have permission to update this booking.')
-        return redirect(url_for('main.bookings'))
-    
-    new_date = request.form.get('date')
-    new_time = request.form.get('time')
-    new_description = request.form.get('description')
-    
-    if new_date and new_time:
-        booking.booking_date_and_time = datetime.strptime(f"{new_date} {new_time}", '%Y-%m-%d %H:%M')
-    if new_description:
-        booking.description = new_description
-    
-    booking.updated_at = datetime.utcnow()
-    db.session.commit()
-    
-    flash('Booking updated successfully.')
-    return redirect(url_for('main.booking_detail', booking_id=booking_id))
-
-@main.route('/booking/cancel/<booking_id>', methods=['POST'])
-def cancel_booking(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user:
-        return redirect(url_for('main.login'))
-    
-    booking = Booking.query.get_or_404(booking_id)
-    
-    if booking.client_id != user.id and booking.photographer_id != user.id:
-        flash('You do not have permission to cancel this booking.')
-        return redirect(url_for('main.bookings'))
-    
-    if booking.booking_date_and_time:
-        slot = PhotographerAvailability.query.filter_by(
-            photographer_id=booking.photographer_id,
-            available_date=booking.booking_date_and_time.date(),
-            is_available=False
-        ).first()
-        
-        if slot:
-            slot.is_available = True
-    
-    db.session.delete(booking)
-    db.session.commit()
-    
-    flash('Booking cancelled successfully!')
-    return redirect(url_for('main.bookings'))
 
 @main.route('/admin/add-availability', methods=['GET', 'POST'])
 def add_availability():
@@ -278,8 +229,74 @@ def add_availability():
         flash('Availability added successfully!')
         return redirect(url_for('main.index'))
     
+    # Get all users with photographer role
     photographers = User.query.filter_by(role='photographer').all()
     return render_template('add_availability.html', photographers=photographers)
+
+@main.route('/bookings')
+def bookings():
+    if 'user_id' not in session:
+        flash('Please log in to view bookings.')
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    
+    # If user is a photographer, show their bookings
+    if user.role == 'photographer':
+        user_bookings = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    # If user is a client, show their bookings
+    else:
+        user_bookings = Booking.query.filter_by(client_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    
+    return render_template('bookings.html', bookings=user_bookings, user=user)
+
+
+@main.route('/bookings/<booking_id>')
+def booking_detail(booking_id):
+    if 'user_id' not in session:
+        flash('Please log in to view booking details.')
+        return redirect(url_for('main.login'))
+    
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security: ensure user can only view their own bookings
+    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
+        flash('You do not have permission to view this booking.')
+        return redirect(url_for('main.bookings'))
+    
+    photographer = User.query.get(booking.photographer_id)
+    client = User.query.get(booking.client_id)
+    
+    return render_template('booking_detail.html', booking=booking, photographer=photographer, client=client)
+
+
+@main.route('/bookings/<booking_id>/update', methods=['POST'])
+def update_booking(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Only photographer or client can update
+    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
+        flash('You do not have permission to update this booking.')
+        return redirect(url_for('main.bookings'))
+    
+    # Update booking details
+    new_date = request.form.get('date')
+    new_time = request.form.get('time')
+    new_description = request.form.get('description')
+    
+    if new_date and new_time:
+        booking.booking_date_and_time = datetime.strptime(f"{new_date} {new_time}", '%Y-%m-%d %H:%M')
+    if new_description:
+        booking.description = new_description
+    
+    booking.updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    flash('Booking updated successfully.')
+    return redirect(url_for('main.booking_detail', booking_id=booking_id))
 
 @main.route('/dashboard/photographer')
 def photographer_dashboard():
@@ -291,31 +308,45 @@ def photographer_dashboard():
         flash('Access denied. Photographers only.')
         return redirect(url_for('main.index'))
     
-    bookings_as_photographer = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
-    bookings_as_client = Booking.query.filter_by(client_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    # Get bookings from clients (where this user is the photographer)
+    bookings = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
     
-    photographer_names = {}
-    for booking in bookings_as_client:
-        if booking.photographer_id:
-            photographer = User.query.get(booking.photographer_id)
-            if photographer:
-                photographer_names[booking.photographer_id] = photographer.name
+    # Attach client objects and photo counts to bookings
+    for booking in bookings:
+        booking.client = User.query.get(booking.client_id)
+        booking.photo_count = Photo.query.filter_by(booking_id=booking.id).count()
     
-    client_names = {}
-    for booking in bookings_as_photographer:
-        if booking.client_id:
-            client = User.query.get(booking.client_id)
-            if client:
-                client_names[booking.client_id] = client.name
+    return render_template('photographer_dashboard_new.html',
+                         user=user,
+                         bookings=bookings)
+
+@main.route('/dashboard/photographer/complete-booking/<booking_id>', methods=['POST'])
+def complete_booking(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
     
-    availability_slots = PhotographerAvailability.query.filter_by(
-        photographer_id=user.id
-    ).order_by(PhotographerAvailability.available_date).all()
+    user = User.query.get(session['user_id'])
+    if not user or user.role != 'photographer':
+        flash('Access denied.')
+        return redirect(url_for('main.index'))
     
-    photos_taken = Photo.query.filter_by(photographer_id=user.id).order_by(Photo.uploaded_at.desc()).all()
+    booking = Booking.query.get_or_404(booking_id)
     
+    # Security check: only the photographer can complete their booking
+    if booking.photographer_id != user.id:
+        flash('You can only complete your own bookings.')
+        return redirect(url_for('main.photographer_dashboard'))
+    
+    booking.status = 'completed'
+    db.session.commit()
+    
+    flash('Booking marked as completed.')
+    return redirect(url_for('main.photographer_dashboard'))
+    
+    # Get photos OF this photographer (as a client)
     photos_as_client = Photo.query.filter_by(user_id=user.id).order_by(Photo.uploaded_at.desc()).all()
     
+    # Group photos as client by photographer
     photos_by_photographer = {}
     for photo in photos_as_client:
         if photo.photographer_id not in photos_by_photographer:
@@ -354,6 +385,7 @@ def add_availability_slot():
         flash('All fields are required.')
         return redirect(url_for('main.photographer_dashboard'))
     
+    # Create availability slot
     new_slot = PhotographerAvailability(
         photographer_id=user.id,
         available_date=datetime.strptime(date, '%Y-%m-%d').date(),
@@ -377,16 +409,20 @@ def delete_slot(slot_id):
         flash('Access denied. Photographers only.')
         return redirect(url_for('main.index'))
     
+    # Get the slot
     slot = PhotographerAvailability.query.get_or_404(slot_id)
     
+    # Security check: ensure the photographer owns this slot
     if slot.photographer_id != user.id:
         flash('You can only delete your own availability slots.')
         return redirect(url_for('main.photographer_dashboard'))
     
+    # Check if slot is already booked
     if not slot.is_available:
         flash('Cannot delete a slot that has already been booked.')
         return redirect(url_for('main.photographer_dashboard'))
     
+    # Delete the slot
     db.session.delete(slot)
     db.session.commit()
     
@@ -402,15 +438,25 @@ def client_dashboard():
     if not user:
         return redirect(url_for('main.login'))
     
-    bookings = Booking.query.filter_by(client_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    # Get bookings with photographer information (eager loading)
+    bookings = db.session.query(Booking).join(User, Booking.photographer_id == User.id).filter(
+        Booking.client_id == user.id
+    ).order_by(Booking.booking_date_and_time.desc()).all()
     
-    photographer_names = {}
+    # Attach photographer objects and photo counts to bookings and prepare for JSON serialization
+    bookings_list = []
     for booking in bookings:
-        if booking.photographer_id:
-            photographer = User.query.get(booking.photographer_id)
-            if photographer:
-                photographer_names[booking.photographer_id] = photographer.name
+        booking.photographer = User.query.get(booking.photographer_id)
+        booking.photo_count = Photo.query.filter_by(booking_id=booking.id).count()
+        bookings_list.append({
+            'id': booking.id,
+            'booking_date_and_time': booking.booking_date_and_time.isoformat() if booking.booking_date_and_time else None,
+            'type': booking.type,
+            'status': booking.status,
+            'photographer_name': booking.photographer.name if booking.photographer else 'Unknown'
+        })
     
+    # Get photos of this client, grouped by photographer
     photos = Photo.query.filter_by(user_id=user.id).order_by(Photo.uploaded_at.desc()).all()
     
     photos_by_photographer = {}
@@ -426,7 +472,7 @@ def client_dashboard():
     return render_template('client_dashboard.html',
                          user=user,
                          bookings=bookings,
-                         photographer_names=photographer_names,
+                         bookings_json=bookings_list,
                          photos_by_photographer=photos_by_photographer)
 
 @main.route('/dashboard/photographer/upload-photos/<booking_id>', methods=['GET', 'POST'])
@@ -439,76 +485,82 @@ def upload_photos(booking_id):
         flash('Access denied. Photographers only.')
         return redirect(url_for('main.index'))
     
+    # Get the booking
     booking = Booking.query.get_or_404(booking_id)
     
+    # Security check: ensure photographer owns this booking
     if booking.photographer_id != user.id:
         flash('You can only upload photos for your own bookings.')
         return redirect(url_for('main.photographer_dashboard'))
     
-    client = User.query.get(booking.client_id)
+    # Get client info
+    booking.client = User.query.get(booking.client_id)
+    
+    # Get existing photos for this booking
+    photos = Photo.query.filter_by(booking_id=booking_id).order_by(Photo.uploaded_at.desc()).all()
     
     if request.method == 'POST':
-        photo_title = request.form.get('photo_title', '')
-        
-        if 'photo_file' not in request.files:
-            flash('No file selected.')
+        # Check if files were uploaded
+        if 'photos' not in request.files:
+            flash('No files selected.')
             return redirect(url_for('main.upload_photos', booking_id=booking_id))
         
-        file = request.files['photo_file']
+        files = request.files.getlist('photos')
         
-        if file.filename == '':
-            flash('No file selected.')
+        if not files or files[0].filename == '':
+            flash('No files selected.')
             return redirect(url_for('main.upload_photos', booking_id=booking_id))
         
+        # Validate and upload files
         allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        uploaded_count = 0
         
-        if file_ext not in allowed_extensions:
-            flash('Invalid file type. Please upload an image (PNG, JPG, JPEG, GIF, WEBP).')
-            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+        for file in files:
+            if file.filename == '':
+                continue
+                
+            file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+            
+            if file_ext not in allowed_extensions:
+                flash(f'Skipped {file.filename}: Invalid file type.')
+                continue
+            
+            try:
+                # Read file content and encode as base64 to store in database
+                import base64
+                file_content = file.read()
+                file_base64 = base64.b64encode(file_content).decode('utf-8')
+                
+                # Create data URL (stores image data directly in the database)
+                photo_url = f"data:{file.content_type};base64,{file_base64}"
+                
+                # Create photo record
+                new_photo = Photo(
+                    user_id=booking.client_id,
+                    photographer_id=user.id,
+                    booking_id=booking.id,
+                    image_url=photo_url,
+                    title=file.filename
+                )
+                db.session.add(new_photo)
+                uploaded_count += 1
+                
+            except Exception as e:
+                flash(f'Error uploading {file.filename}: {str(e)}')
+                continue
         
-        try:
-            unique_filename = f"{uuid.uuid4()}.{file_ext}"
-            file_path = f"bookings/{booking_id}/{unique_filename}"
-            
-            supabase = get_supabase_client()
-            bucket_name = current_app.config['SUPABASE_STORAGE_BUCKET']
-            
-            file_content = file.read()
-            
-            response = supabase.storage.from_(bucket_name).upload(
-                file_path,
-                file_content,
-                file_options={"content-type": file.content_type}
-            )
-            
-            photo_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
-            
-            new_photo = Photo(
-                user_id=booking.client_id,
-                photographer_id=user.id,
-                booking_id=booking.id,
-                image_url=photo_url,
-                title=photo_title or file.filename
-            )
-            db.session.add(new_photo)
+        if uploaded_count > 0:
             db.session.commit()
-            
-            flash('Photo uploaded successfully!')
-            
-        except Exception as e:
-            flash(f'Error uploading photo: {str(e)}')
-            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+            flash(f'{uploaded_count} photo(s) uploaded successfully!')
+        else:
+            flash('No photos were uploaded.')
         
         return redirect(url_for('main.upload_photos', booking_id=booking_id))
     
-    existing_photos = Photo.query.filter_by(booking_id=booking.id).order_by(Photo.uploaded_at.desc()).all()
-    
-    return render_template('upload_photos.html',
+    return render_template('upload_photos_new.html',
                          user=user,
                          booking=booking,
-                         client=client,
-                         existing_photos=existing_photos)
+                         photos=photos)
 
 @main.route('/dashboard/photographer/delete-photo/<int:photo_id>', methods=['POST'])
 def delete_photo(photo_id):
@@ -520,16 +572,22 @@ def delete_photo(photo_id):
         flash('Access denied. Photographers only.')
         return redirect(url_for('main.index'))
     
+    # Get the photo
     photo = Photo.query.get_or_404(photo_id)
     
+    # Security check: ensure photographer owns this photo
     if photo.photographer_id != user.id:
         flash('You can only delete photos you have uploaded.')
         return redirect(url_for('main.photographer_dashboard'))
     
+    # Store booking_id for redirect
     booking_id = photo.booking_id
     
+    # Delete from Supabase Storage if it's a storage URL
     try:
         if 'supabase.co/storage' in photo.image_url:
+            # Extract file path from URL
+            # URL format: https://PROJECT.supabase.co/storage/v1/object/public/BUCKET/PATH
             parts = photo.image_url.split('/storage/v1/object/public/')
             if len(parts) == 2:
                 bucket_and_path = parts[1].split('/', 1)
@@ -540,170 +598,119 @@ def delete_photo(photo_id):
                     supabase = get_supabase_client()
                     supabase.storage.from_(bucket_name).remove([file_path])
     except Exception as e:
+        # If deletion from storage fails, continue with database deletion
         print(f"Error deleting from storage: {str(e)}")
     
+    # Delete from database
     db.session.delete(photo)
     db.session.commit()
     
     flash('Photo deleted successfully!')
     
+    # Redirect back to upload page if booking_id exists, otherwise to dashboard
     if booking_id:
         return redirect(url_for('main.upload_photos', booking_id=booking_id))
     return redirect(url_for('main.photographer_dashboard'))
 
-@main.route('/auth/register', methods=['POST'])
-def register_api():
-    data = request.get_json()
-    
-    existing_user = User.query.filter_by(email=data['email']).first()
-    if existing_user:
-        return jsonify({'error': 'Email already registered'}), 400
-    
-    new_user = User(
-        username=data['name'],
-        email=data['email'],
-        password_hash=generate_password_hash(data['password']),
-        role=data.get('role', 'client')
-    )
-    db.session.add(new_user)
-    db.session.commit()
-    
-    return jsonify({'message': 'Registration successful', 'user_id': new_user.id}), 201
-
-@main.route('/auth/login', methods=['POST'])
-def login_api():
-    data = request.get_json()
-    
-    user = User.query.filter_by(email=data['email']).first()
-    
-    if user and check_password_hash(user.password_hash, data['password']):
-        session['user_id'] = user.id
-        session['user_name'] = user.username
-        session['user_role'] = user.role
-        
-        return jsonify({
-            'message': 'Login successful',
-            'user': {
-                'id': user.id,
-                'name': user.username,
-                'email': user.email,
-                'role': user.role
-            }
-        }), 200
-    
-    return jsonify({'error': 'Invalid credentials'}), 401
-
-@main.route('/auth/logout', methods=['POST'])
-def logout_api():
-    session.clear()
-    return jsonify({'message': 'Logged out successfully'}), 200
-
-@main.route('/auth/me', methods=['GET'])
-def get_current_user_api():
+@main.route('/booking/photos/<booking_id>')
+def view_booking_photos(booking_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
+        return redirect(url_for('main.login'))
     
     user = User.query.get(session['user_id'])
-    return jsonify({
-        'id': user.id,
-        'name': user.username,
-        'email': user.email,
-        'role': user.role
-    }), 200
-
-@main.route('/photographers', methods=['GET'])
-def get_photographers_api():
-    photographers = User.query.filter_by(role='photographer').all()
+    if not user:
+        return redirect(url_for('main.login'))
     
-    return jsonify([{
-        'id': p.id,
-        'name': p.username,
-        'bio': p.bio,
-        'location': p.location,
-        'price_per_hour': float(p.price_per_hour) if p.price_per_hour else None,
-        'profile_picture': p.profile_picture,
-        'portfolio_url': p.portfolio_url
-    } for p in photographers]), 200
-
-@main.route('/photographers/<int:photographer_id>', methods=['GET'])
-def get_photographer_api(photographer_id):
-    photographer = User.query.get_or_404(photographer_id)
-    
-    return jsonify({
-        'id': photographer.id,
-        'name': photographer.username,
-        'email': photographer.email,
-        'bio': photographer.bio,
-        'location': photographer.location,
-        'price_per_hour': float(photographer.price_per_hour) if photographer.price_per_hour else None,
-        'profile_picture': photographer.profile_picture,
-        'portfolio_url': photographer.portfolio_url,
-        'phone': photographer.phone
-    }), 200
-
-@main.route('/bookings', methods=['GET', 'POST'])
-def bookings_api():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    if request.method == 'POST':
-        data = request.get_json()
-        
-        booking_datetime = datetime.fromisoformat(data['booking_date_and_time'])
-        
-        existing = Booking.query.filter_by(
-            photographer_id=data['photographer_id'],
-            booking_date_and_time=booking_datetime
-        ).first()
-        
-        if existing:
-            return jsonify({'error': 'Time slot already booked'}), 400
-        
-        new_booking = Booking(
-            client_id=session['user_id'],
-            photographer_id=data['photographer_id'],
-            booking_date_and_time=booking_datetime,
-            type=data.get('type', 'session'),
-            description=data.get('description', ''),
-            status='confirmed'
-        )
-        db.session.add(new_booking)
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Booking confirmed',
-            'booking_id': new_booking.id
-        }), 201
-    
-    user = User.query.get(session['user_id'])
-    
-    if user.role == 'photographer':
-        user_bookings = Booking.query.filter_by(photographer_id=user.id).all()
-    else:
-        user_bookings = Booking.query.filter_by(client_id=user.id).all()
-    
-    return jsonify([{
-        'id': b.id,
-        'client_id': b.client_id,
-        'photographer_id': b.photographer_id,
-        'booking_date_and_time': b.booking_date_and_time.isoformat(),
-        'type': b.type,
-        'description': b.description,
-        'status': b.status,
-        'created_at': b.created_at.isoformat()
-    } for b in user_bookings]), 200
-
-@main.route('/bookings/<booking_id>', methods=['DELETE'])
-def cancel_booking_api(booking_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
+    # Get the booking
     booking = Booking.query.get_or_404(booking_id)
     
-    if booking.client_id != session['user_id'] and booking.photographer_id != session['user_id']:
-        return jsonify({'error': 'Unauthorized'}), 403
+    # Security check: only the client can view their photos
+    if booking.client_id != user.id:
+        flash('You can only view photos from your own bookings.')
+        return redirect(url_for('main.client_dashboard'))
     
+    # Get photographer info
+    booking.photographer = User.query.get(booking.photographer_id)
+    
+    # Get photos for this booking
+    photos = Photo.query.filter_by(booking_id=booking_id).order_by(Photo.uploaded_at.desc()).all()
+    
+    return render_template('view_booking_photos.html',
+                         user=user,
+                         booking=booking,
+                         photos=photos)
+
+@main.route('/booking/cancel/<booking_id>', methods=['POST'])
+def cancel_booking(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return redirect(url_for('main.login'))
+    
+    # Get the booking
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security check: only the client can cancel their booking
+    if booking.client_id != user.id:
+        flash('You can only cancel your own bookings.')
+        return redirect(url_for('main.client_dashboard'))
+    
+    # Free up the availability slot
+    if booking.booking_date_and_time:
+        # Find the corresponding availability slot
+        slot = PhotographerAvailability.query.filter_by(
+            photographer_id=booking.photographer_id,
+            available_date=booking.booking_date_and_time.date(),
+            is_available=False
+        ).first()
+        
+        if slot:
+            slot.is_available = True
+    
+    # Delete the booking
     db.session.delete(booking)
     db.session.commit()
     
-    return jsonify({'message': 'Booking cancelled'}), 200
+    flash('Booking cancelled successfully!')
+    return redirect(url_for('main.client_dashboard'))
+
+@main.route('/booking/delete/<booking_id>', methods=['POST'])
+def delete_booking(booking_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return redirect(url_for('main.login'))
+    
+    # Get the booking
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security check: client can delete their own bookings, photographer can delete their client bookings
+    if booking.client_id != user.id and booking.photographer_id != user.id:
+        flash('You can only delete your own bookings.')
+        if user.role == 'photographer':
+            return redirect(url_for('main.photographer_dashboard'))
+        return redirect(url_for('main.client_dashboard'))
+    
+    # Only allow deleting completed or cancelled bookings
+    if booking.status not in ['completed', 'cancelled']:
+        flash('You can only delete completed or cancelled bookings.')
+        if user.role == 'photographer':
+            return redirect(url_for('main.photographer_dashboard'))
+        return redirect(url_for('main.client_dashboard'))
+    
+    # Delete associated photos first
+    Photo.query.filter_by(booking_id=booking_id).delete()
+    
+    # Delete the booking
+    db.session.delete(booking)
+    db.session.commit()
+    
+    flash('Booking and associated photos deleted successfully!')
+    
+    if user.role == 'photographer':
+        return redirect(url_for('main.photographer_dashboard'))
+    return redirect(url_for('main.client_dashboard'))

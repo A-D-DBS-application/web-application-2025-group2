@@ -3,334 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings - Culex</title>
-    <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600&display=swap" rel="stylesheet">
+    <title>My Bookings - De Kodak</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: #f9fafb;
-            color: #1f2937;
+            font-family: 'Montserrat', sans-serif;
+            background: #fafbfc;
         }
-        
         nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 20px 80px;
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        
         .logo {
             font-size: 1.5rem;
             font-weight: 600;
-            color: #1f2937;
+            color: #333;
         }
-        
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
-        
         .nav-links a {
-            color: #4b5563;
+            margin-left: 30px;
             text-decoration: none;
+            color: #333;
             font-weight: 500;
         }
-        
-        .nav-links a:hover {
-            color: #2563eb;
-        }
-        
         .container {
             max-width: 1200px;
             margin: 40px auto;
             padding: 0 20px;
         }
-        
         h1 {
-            font-size: 2rem;
-            margin-bottom: 8px;
-            color: #1f2937;
-        }
-        
-        .subtitle {
-            color: #6b7280;
             margin-bottom: 30px;
+            color: #333;
         }
-        
-        .view-toggle {
-            display: inline-flex;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .view-toggle button {
-            padding: 8px 16px;
-            border: none;
-            background: transparent;
-            color: #4b5563;
-            font-weight: 500;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        
-        .view-toggle button.active {
-            background: #2563eb;
-            color: white;
-        }
-        
-        .filter-buttons {
-            display: inline-flex;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 4px;
-            float: right;
-        }
-        
-        .filter-buttons button {
-            padding: 8px 16px;
-            border: none;
-            background: transparent;
-            color: #4b5563;
-            font-weight: 500;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        
-        .filter-buttons button.active {
-            background: #2563eb;
-            color: white;
-        }
-        
         .booking-card {
-            background: white;
+            background: #fff;
             border-radius: 12px;
             padding: 24px;
-            margin-bottom: 16px;
-            border: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: box-shadow 0.3s;
         }
-        
-        .booking-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        .booking-info h3 {
+            margin-bottom: 10px;
+            color: #333;
         }
-        
-        .booking-info {
-            flex: 1;
+        .booking-info p {
+            color: #666;
+            margin: 5px 0;
         }
-        
-        .booking-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-        
-        .booking-header h3 {
-            font-size: 1.125rem;
-            color: #1f2937;
-        }
-        
-        .badge {
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .booking-type {
-            color: #2563eb;
-            font-weight: 500;
-            margin-bottom: 12px;
-        }
-        
-        .booking-details {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            color: #6b7280;
-            font-size: 0.875rem;
-        }
-        
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
         .booking-actions {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 12px;
+            gap: 10px;
         }
-        
-        .price {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        
         .btn {
-            padding: 10px 16px;
+            padding: 10px 20px;
+            border: none;
             border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.3s;
+            font-weight: 600;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            display: inline-block;
         }
-        
-        .btn-secondary {
-            background: white;
-            border: 1px solid #e5e7eb;
-            color: #4b5563;
+        .btn-primary {
+            background: #1E88E5;
+            color: #fff;
         }
-        
-        .btn-secondary:hover {
-            background: #f9fafb;
-        }
-        
         .btn-danger {
-            background: white;
-            border: 1px solid #fecaca;
-            color: #dc2626;
+            background: #f44336;
+            color: #fff;
         }
-        
-        .btn-danger:hover {
-            background: #fef2f2;
+        .btn:hover {
+            opacity: 0.9;
         }
-        
         .no-bookings {
             text-align: center;
             padding: 60px 20px;
-            background: white;
-            border-radius: 12px;
-        }
-        
-        .no-bookings h3 {
-            color: #1f2937;
-            margin: 16px 0 8px;
-        }
-        
-        .no-bookings p {
-            color: #6b7280;
-            margin-bottom: 24px;
-        }
-        
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        .btn-primary:hover {
-            background: #1d4ed8;
+            color: #999;
         }
     </style>
 </head>
 <body>
     <nav>
-        <div class="logo">Culex</div>
+        <div class="logo">De Kodak</div>
         <div class="nav-links">
-            <a href="{{ url_for('main.index') }}">Home</a>
-            <a href="{{ url_for('main.book') }}">Find Photographers</a>
-            <a href="{{ url_for('main.bookings') }}">My Bookings</a>
+            <a href="{{ url_for('main.index') }}">HOME</a>
+            <a href="{{ url_for('main.bookings') }}">BOOKINGS</a>
             {% if session.get('user_id') %}
                 <form action="{{ url_for('main.logout') }}" method="POST" style="display:inline;">
-                    <button type="submit" class="btn-secondary" style="border:none;">Logout</button>
+                    <button type="submit" style="background:none;border:none;color:#333;font-weight:500;cursor:pointer;">LOGOUT</button>
                 </form>
             {% endif %}
         </div>
     </nav>
 
     <div class="container">
-        <h1>Manage My Bookings</h1>
-        <p class="subtitle">View and manage all your photography session bookings</p>
-
-        <div style="margin-bottom: 24px; overflow: hidden;">
-            <div class="view-toggle">
-                <button class="active">List View</button>
-                <button>Calendar View</button>
-            </div>
-            
-            <div class="filter-buttons">
-                <button>All</button>
-                <button class="active">Upcoming</button>
-                <button>Past</button>
-            </div>
-        </div>
+        <h1>{% if user.role == 'photographer' %}My Client Bookings{% else %}My Bookings{% endif %}</h1>
 
         {% if bookings %}
             {% for booking in bookings %}
             <div class="booking-card">
                 <div class="booking-info">
-                    <div class="booking-header">
-                        <h3>Photographer #{{ booking.photographer_id }}</h3>
-                        <span class="badge">UPCOMING</span>
-                    </div>
-                    <div class="booking-type">{{ booking.type|title }} Session</div>
-                    <div class="booking-details">
-                        <div class="detail-item">
-                            📅 {{ booking.booking_date_and_time.strftime('%A, %B %d, %Y') }}
-                        </div>
-                        <div class="detail-item">
-                            🕐 {{ booking.booking_date_and_time.strftime('%I:%M %p') }}
-                        </div>
-                        <div class="detail-item">
-                            📍 Location TBD
-                        </div>
-                    </div>
+                    <h3>{{ booking.type|title }} Session</h3>
+                    <p><strong>Date:</strong> {{ booking.booking_date_and_time.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    {% if user.role == 'photographer' %}
+                        <p><strong>Client ID:</strong> {{ booking.client_id }}</p>
+                    {% else %}
+                        <p><strong>Photographer ID:</strong> {{ booking.photographer_id }}</p>
+                    {% endif %}
+                    <p><strong>Description:</strong> {{ booking.description or 'No description provided' }}</p>
+                    <p style="font-size: 0.9em; color: #999;">Created: {{ booking.created_at.strftime('%B %d, %Y') }}</p>
                 </div>
-                
                 <div class="booking-actions">
-                    <div class="price">€300</div>
-                    <div class="action-buttons">
-                        <a href="{{ url_for('main.booking_detail', booking_id=booking.id) }}" class="btn btn-secondary">
-                            ✏️ Reschedule
-                        </a>
-                        <form action="{{ url_for('main.cancel_booking', booking_id=booking.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Cancel this booking?');">
-                            <button type="submit" class="btn btn-danger">❌ Cancel</button>
-                        </form>
-                    </div>
+                    <a href="{{ url_for('main.booking_detail', booking_id=booking.id) }}" class="btn btn-primary">View Details</a>
+                    <form action="{{ url_for('main.cancel_booking', booking_id=booking.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                        <button type="submit" class="btn btn-danger">Cancel</button>
+                    </form>
                 </div>
             </div>
             {% endfor %}
         {% else %}
             <div class="no-bookings">
-                <div style="font-size: 3rem;">📅</div>
-                <h3>No bookings yet</h3>
-                <p>You haven't made any bookings yet.</p>
-                <a href="{{ url_for('main.book') }}" class="btn btn-primary">Find Photographers</a>
+                <h2>No bookings yet</h2>
+                <p>{% if user.role == 'photographer' %}You don't have any client bookings yet.{% else %}You haven't made any bookings yet.{% endif %}</p>
+                {% if user.role != 'photographer' %}
+                    <a href="{{ url_for('main.book') }}" class="btn btn-primary" style="margin-top: 20px;">Book a Photographer</a>
+                {% endif %}
             </div>
         {% endif %}
     </div>

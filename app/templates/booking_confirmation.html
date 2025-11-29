@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Confirmed - Culex</title>
-    <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600&display=swap" rel="stylesheet">
+    <title>Booking Confirmed - De Kodak</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,99 +12,140 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: #f9fafb;
-            color: #1f2937;
-            min-height: 100vh;
+            font-family: 'Montserrat', sans-serif;
+            background: #fafbfc;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 80px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .nav-links a {
+            margin-left: 30px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 600px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+            padding: 40px;
+            text-align: center;
+        }
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #4caf50;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 0 auto 30px;
         }
-        .confirmation-container {
-            background: white;
-            padding: 60px 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            max-width: 500px;
-            text-align: center;
-        }
-        .success-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
+        .checkmark::after {
+            content: '✓';
+            font-size: 50px;
+            color: #fff;
         }
         h1 {
-            color: #1f2937;
-            margin-bottom: 10px;
+            margin-bottom: 16px;
+            color: #333;
         }
         .subtitle {
-            color: #6b7280;
-            margin-bottom: 30px;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
         }
         .booking-details {
-            background: #f9fafb;
-            padding: 20px;
+            background: #f5f5f5;
             border-radius: 8px;
-            margin: 30px 0;
+            padding: 30px;
+            margin-bottom: 30px;
             text-align: left;
         }
-        .booking-details p {
-            margin-bottom: 10px;
-            color: #4b5563;
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
         }
-        .booking-details strong {
-            color: #1f2937;
+        .detail-row:last-child {
+            border-bottom: none;
         }
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-            padding: 12px 32px;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-block;
+        .detail-label {
             font-weight: 600;
+            color: #333;
+        }
+        .detail-value {
+            color: #666;
+        }
+        .btn {
+            display: inline-block;
+            background: #1E88E5;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s;
             margin-top: 20px;
         }
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-        .btn-secondary {
-            background: white;
-            color: #2563eb;
-            padding: 12px 32px;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: 600;
-            margin-top: 10px;
-            border: 2px solid #2563eb;
-        }
-        .btn-secondary:hover {
-            background: #eff6ff;
+        .btn:hover {
+            background: #1565C0;
         }
     </style>
 </head>
 <body>
-    <div class="confirmation-container">
-        <div class="success-icon">✓</div>
+    <nav>
+        <div class="logo">De Kodak</div>
+        <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">HOME</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="checkmark"></div>
         <h1>Booking Confirmed!</h1>
-        <p class="subtitle">Your photography session has been successfully booked</p>
+        <p class="subtitle">Your booking has been successfully saved. The photographer will contact you shortly.</p>
 
         <div class="booking-details">
-            <p><strong>Photographer:</strong> {{ photographer_name }}</p>
-            <p><strong>Date & Time:</strong> {{ booking.booking_date_and_time.strftime('%B %d, %Y at %I:%M %p') }}</p>
-            <p><strong>Session Type:</strong> {{ booking.type|title }}</p>
+            <div class="detail-row">
+                <span class="detail-label">Booking ID:</span>
+                <span class="detail-value">{{ booking.id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Photographer:</span>
+                <span class="detail-value">{{ photographer_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Date & Time:</span>
+                <span class="detail-value">{{ booking.booking_date_and_time.strftime('%d-%m-%Y at %H:%M') }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{ booking.type }}</span>
+            </div>
             {% if booking.description %}
-                <p><strong>Notes:</strong> {{ booking.description }}</p>
+            <div class="detail-row">
+                <span class="detail-label">Notes:</span>
+                <span class="detail-value">{{ booking.description }}</span>
+            </div>
             {% endif %}
         </div>
 
-        <p style="color: #6b7280; margin-bottom: 20px;">
-            A confirmation email has been sent to your inbox. The photographer will contact you shortly to finalize the details.
-        </p>
-
-        <a href="{{ url_for('main.bookings') }}" class="btn-primary">View My Bookings</a>
-        <br>
-        <a href="{{ url_for('main.index') }}" class="btn-secondary">Back to Home</a>
+        <a href="{{ url_for('main.index') }}" class="btn">Back to Home</a>
     </div>
 </body>
 </html>

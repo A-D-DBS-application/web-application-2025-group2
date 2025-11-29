@@ -50,9 +50,9 @@ class Photo(db.Model):
     photo_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Client who ordered
     photographer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Photographer who took it
-    booking_id = db.Column(pg.UUID(as_uuid=True), db.ForeignKey('bookings.id'), nullable=True)  # Related booking
+    booking_id = db.Column(db.String(36), db.ForeignKey('bookings.id'), nullable=True)  # Related booking
     category_id = db.Column(db.Integer, db.ForeignKey('category.category_id'), nullable=True)
-    image_url = db.Column(db.String(1024), nullable=False)
+    image_url = db.Column(db.Text, nullable=False)  # Changed to Text to support base64 images
     title = db.Column(db.String(200), nullable=True)
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 

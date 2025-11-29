@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Find Photographers - Culex{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .photographers-hero { padding: 4rem 2rem 3rem; background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); text-align: center; }
+    .photographers-hero h1 { font-size: 3rem; font-weight: 700; color: #FFF; margin-bottom: 1rem; }
+    .photographers-hero p { font-size: 1.25rem; color: rgba(255,255,255,0.9); max-width: 600px; margin: 0 auto; }
+    .photographers-section { padding: 3rem 2rem; max-width: 1280px; margin: 0 auto; }
+    .photographers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
+    .photographer-card { background: #FFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; transition: all 0.3s; }
+    .photographer-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+    .photographer-header { height: 250px; background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); position: relative; overflow: hidden; }
+    .photographer-avatar { width: 100px; height: 100px; border-radius: 50%; background: #FFF; border: 4px solid #FFF; position: absolute; bottom: -50px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; font-size: 3rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .photographer-body { padding: 3.5rem 1.5rem 1.5rem; text-align: center; }
+    .photographer-name { font-size: 1.5rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem; }
+    .photographer-specialty { color: #64748B; margin-bottom: 0.75rem; font-size: 0.9375rem; }
+    .photographer-bio { color: #475569; font-size: 0.875rem; line-height: 1.6; margin-bottom: 1rem; min-height: 60px; }
+    .photographer-rating { display: flex; justify-content: center; gap: 0.25rem; margin-bottom: 1rem; }
+    .star { color: #FBBF24; font-size: 1.125rem; }
+    .photographer-meta { display: flex; justify-content: space-around; padding: 1rem 0; border-top: 1px solid #E2E8F0; margin-bottom: 1rem; }
+    .meta-item { text-align: center; }
+    .meta-value { font-size: 1.25rem; font-weight: 700; color: #2563EB; }
+    .meta-label { font-size: 0.75rem; color: #64748B; text-transform: uppercase; }
+    .photographer-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 0 1rem 1rem; }
+    .gallery-item { aspect-ratio: 1; background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="photographers-hero">
+    <h1>Find Your Perfect Photographer</h1>
+    <p>Browse our curated list of professional photographers and book your next session</p>
+</div>
+
+<div class="photographers-section">
+    <div class="photographers-grid">
+        {% for item in photographers %}
+        <div class="photographer-card">
+            <div class="photographer-header">
+                <div class="photographer-avatar">📷</div>
+            </div>
+            <div class="photographer-body">
+                <div class="photographer-name">{{ item.photographer.name }}</div>
+                <div class="photographer-specialty">{{ item.photographer.specialty or 'Professional Photography' }}</div>
+                <div class="photographer-bio">{{ item.photographer.bio or 'Passionate photographer capturing moments that last forever.' }}</div>
+                
+                <div class="photographer-rating">
+                    {% for i in range(5) %}
+                    <span class="star">★</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="photographer-meta">
+                    <div class="meta-item">
+                        <div class="meta-value">€{{ item.photographer.hourly_rate or 150 }}</div>
+                        <div class="meta-label">Per Hour</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-value">{{ item.photos|length }}</div>
+                        <div class="meta-label">Photos</div>
+                    </div>
+                </div>
+                
+                {% if item.photos %}
+                <div class="photographer-gallery">
+                    {% for photo in item.photos[:3] %}
+                    <div class="gallery-item">📸</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <a href="{{ url_for('main.photographer_profile', photographer_id=item.photographer.id) }}" class="btn btn-primary" style="width: 100%; text-align: center; margin-top: 1rem;">View Profile & Book</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
