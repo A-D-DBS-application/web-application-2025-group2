@@ -21,18 +21,16 @@ def get_supabase_client() -> Client:
 
 @main.route('/')
 def index():
-    # Get photographers from database
     photographers = User.query.filter_by(role='photographer').limit(3).all()
-    
-    # Get photos for each photographer
     photographer_photos = {}
     for photographer in photographers:
-        photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).limit(4).all()
+        photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).limit(2).all()
         photographer_photos[photographer.id] = photos
     
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
-        return render_template('index.html', username=user.name if user else None, user=user, photographers=photographers, photographer_photos=photographer_photos)
+        return render_template('index.html', username=user.username, user=user, photographers=photographers, photographer_photos=photographer_photos)
+    
     return render_template('index.html', username=None, user=None, photographers=photographers, photographer_photos=photographer_photos)
 
 @main.route('/register', methods=['GET', 'POST'])
