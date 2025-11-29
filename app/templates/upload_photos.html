@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Photos - De Kodak</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .nav-links a, .nav-links button {
+            color: #333;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .nav-links a:hover, .nav-links button:hover {
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .booking-info {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .booking-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .booking-info p {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: #43a047;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #2e7d32;
+        }
+        .btn-back {
+            background: #666;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+        .btn-back:hover {
+            background: #555;
+        }
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .photo-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .photo-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .photo-info {
+            padding: 12px;
+        }
+        .photo-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .photo-date {
+            color: #999;
+            font-size: 12px;
+        }
+        .section-title {
+            color: #667eea;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .flash-message {
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .helper-text {
+            color: #999;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .btn-delete-photo {
+            background: #d32f2f;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        .btn-delete-photo:hover {
+            background: #b71c1c;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">De Kodak</div>
+        <div class="nav-links">
+            <span>Welcome, {{ user.name }}! 📷</span>
+            <a href="{{ url_for('main.index') }}">Home</a>
+            <a href="{{ url_for('main.photographer_dashboard') }}">Dashboard</a>
+            <form method="POST" action="{{ url_for('main.logout') }}" style="display:inline;">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="{{ url_for('main.photographer_dashboard') }}" class="btn-back">← Back to Dashboard</a>
+        
+        <h1>Upload Photos</h1>
+        <p class="subtitle">Add photos for this booking</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="booking-info">
+            <h3>Booking Details</h3>
+            <p><strong>Client:</strong> {{ client.name }}</p>
+            <p><strong>Date:</strong> {{ booking.booking_date_and_time.strftime('%d-%m-%Y %H:%M') }}</p>
+            <p><strong>Type:</strong> {{ booking.type }}</p>
+            {% if booking.description %}
+            <p><strong>Description:</strong> {{ booking.description }}</p>
+            {% endif %}
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="photo_file">Select Photo *</label>
+                <input type="file" id="photo_file" name="photo_file" accept="image/*" required>
+                <p class="helper-text">Select an image file from your computer (PNG, JPG, JPEG, GIF, WEBP)</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="photo_title">Photo Title</label>
+                <input type="text" id="photo_title" name="photo_title" placeholder="e.g., Portrait Shot, Landscape View">
+                <p class="helper-text">Optional: Give the photo a descriptive title</p>
+            </div>
+            
+            <button type="submit" class="btn">📸 Upload Photo</button>
+        </form>
+
+        {% if existing_photos %}
+        <h2 class="section-title">Uploaded Photos ({{ existing_photos|length }})</h2>
+        <div class="photos-grid">
+            {% for photo in existing_photos %}
+            <div class="photo-card">
+                <img src="{{ photo.image_url }}" alt="{{ photo.title or 'Photo' }}" onerror="this.src='https://via.placeholder.com/200x200?text=Photo+Not+Available'">
+                <div class="photo-info">
+                    <div class="photo-title">{{ photo.title or 'Untitled' }}</div>
+                    <div class="photo-date">{{ photo.uploaded_at.strftime('%d-%m-%Y %H:%M') }}</div>
+                    <form method="POST" action="{{ url_for('main.delete_photo', photo_id=photo.photo_id) }}" style="margin-top: 10px;">
+                        <button type="submit" class="btn-delete-photo" onclick="return confirm('Are you sure you want to delete this photo?');">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
