@@ -3,8 +3,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from app import db
-from app.models import User, Booking, PhotographerAvailability, Photo
+from app.models import db, User, Booking, PhotographerAvailability, Photo
 from datetime import datetime, timedelta
 import json
 import os
