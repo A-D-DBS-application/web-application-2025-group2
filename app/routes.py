@@ -477,90 +477,116 @@ def client_dashboard():
 
 @main.route('/dashboard/photographer/upload-photos/<booking_id>', methods=['GET', 'POST'])
 def upload_photos(booking_id):
+    print(f"\n🔍 Route called - Method: {request.method}, Booking: {booking_id}")
+    
     if 'user_id' not in session:
+        print("❌ FAILED: No user_id in session")
         return redirect(url_for('main.login'))
     
+    print(f"✅ User in session: {session['user_id']}")
+    
     user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied. Photographers only.')
+    if not user:
+        print("❌ FAILED: User not found in database")
+        return redirect(url_for('main.login'))
+    
+    print(f"✅ User found: {user.name}, Role: {user.role}")
+    
+    if user.role != 'photographer':
+        print(f"❌ FAILED: User is not photographer (role: {user.role})")
+        flash('Access denied.')
         return redirect(url_for('main.index'))
     
-    # Get the booking
-    booking = Booking.query.get_or_404(booking_id)
+    print(f"✅ User is photographer")
     
-    # Security check: ensure photographer owns this booking
-    if booking.photographer_id != user.id:
-        flash('You can only upload photos for your own bookings.')
+    booking = Booking.query.get(booking_id)
+    if not booking:
+        print(f"❌ FAILED: Booking {booking_id} not found")
+        flash('Booking not found.')
         return redirect(url_for('main.photographer_dashboard'))
     
-    # Get client info
-    booking.client = User.query.get(booking.client_id)
+    print(f"✅ Booking found: {booking.id}")
+    print(f"   Photographer ID on booking: {booking.photographer_id}")
+    print(f"   Current user ID: {user.id}")
     
-    # Get existing photos for this booking
-    photos = Photo.query.filter_by(booking_id=booking_id).order_by(Photo.uploaded_at.desc()).all()
+    if booking.photographer_id != user.id:
+        print(f"❌ FAILED: Booking photographer ({booking.photographer_id}) != current user ({user.id})")
+        flash('Booking not found.')
+        return redirect(url_for('main.photographer_dashboard'))
+    
+    print(f"✅ Booking belongs to photographer")
     
     if request.method == 'POST':
-        # Check if files were uploaded
-        if 'photos' not in request.files:
-            flash('No files selected.')
-            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+        print("\n" + "="*70)
+        print("POST REQUEST - UPLOAD STARTING")
+        print("="*70)
         
         files = request.files.getlist('photos')
+        print(f"Files received: {len(files)}")
         
         if not files or files[0].filename == '':
+            print("❌ FAILED: No files or empty filename")
             flash('No files selected.')
-            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+            return redirect(request.url)
         
-        # Validate and upload files
-        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-        uploaded_count = 0
+        print("✅ File validation passed")
         
-        for file in files:
-            if file.filename == '':
-                continue
-                
-            file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        try:
+            supabase = get_supabase_client()
+            print(f"✅ Supabase client created")
             
-            if file_ext not in allowed_extensions:
-                flash(f'Skipped {file.filename}: Invalid file type.')
-                continue
+            uploaded_count = 0
+            for file in files:
+                if file and file.filename:
+                    print(f"\n--- Processing: {file.filename} ---")
+                    
+                    file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+                    unique_filename = f"{uuid.uuid4()}.{file_ext}"
+                    print(f"  Unique filename: {unique_filename}")
+                    
+                    file_content = file.read()
+                    print(f"  File size: {len(file_content)} bytes")
+                    
+                    print("  Uploading to Supabase...")
+                    response = supabase.storage.from_('photos').upload(
+                        path=unique_filename,
+                        file=file_content,
+                        file_options={"content-type": file.content_type}
+                    )
+                    print(f"  ✅ Uploaded to Supabase: {response}")
+                    
+                    photo_url = supabase.storage.from_('photos').get_public_url(unique_filename)
+                    print(f"  ✅ Photo URL: {photo_url}")
+                    
+                    new_photo = Photo(
+                        user_id=booking.client_id,
+                        photographer_id=user.id,
+                        booking_id=booking.id,
+                        image_url=photo_url,
+                        title=file.filename,
+                        category_id=None
+                    )
+                    
+                    db.session.add(new_photo)
+                    print(f"  ✅ Added to DB session")
+                    uploaded_count += 1
             
-            try:
-                # Read file content and encode as base64 to store in database
-                import base64
-                file_content = file.read()
-                file_base64 = base64.b64encode(file_content).decode('utf-8')
-                
-                # Create data URL (stores image data directly in the database)
-                photo_url = f"data:{file.content_type};base64,{file_base64}"
-                
-                # Create photo record
-                new_photo = Photo(
-                    user_id=booking.client_id,
-                    photographer_id=user.id,
-                    booking_id=booking.id,
-                    image_url=photo_url,
-                    title=file.filename
-                )
-                db.session.add(new_photo)
-                uploaded_count += 1
-                
-            except Exception as e:
-                flash(f'Error uploading {file.filename}: {str(e)}')
-                continue
-        
-        if uploaded_count > 0:
             db.session.commit()
-            flash(f'{uploaded_count} photo(s) uploaded successfully!')
-        else:
-            flash('No photos were uploaded.')
-        
-        return redirect(url_for('main.upload_photos', booking_id=booking_id))
+            print(f"\n✅ COMMIT SUCCESSFUL - {uploaded_count} photos uploaded to Supabase")
+            
+            flash(f'Successfully uploaded {uploaded_count} photo(s)!')
+            return redirect(url_for('main.upload_photos', booking_id=booking_id))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"\n❌ ERROR: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            flash(f'Error uploading photos: {str(e)}')
+            return redirect(request.url)
     
-    return render_template('upload_photos_new.html',
-                         user=user,
-                         booking=booking,
-                         photos=photos)
+    photos = Photo.query.filter_by(booking_id=booking_id).all()
+    return render_template('upload_photos_new.html', booking=booking, photos=photos)
 
 @main.route('/dashboard/photographer/delete-photo/<int:photo_id>', methods=['POST'])
 def delete_photo(photo_id):
