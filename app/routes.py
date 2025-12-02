@@ -441,20 +441,25 @@ def client_dashboard():
         Booking.client_id == user.id
     ).order_by(Booking.booking_date_and_time.desc()).all()
     
-    # Attach photographer objects and photo counts to bookings and prepare for JSON serialization
+    # Attach photographer objects and photo counts to bookings
     bookings_list = []
     for booking in bookings:
         booking.photographer = User.query.get(booking.photographer_id)
-        booking.photo_count = Photo.query.filter_by(booking_id=booking.id).count()
+        # FIX: Get photos for THIS booking specifically
+        booking_photos = Photo.query.filter_by(booking_id=booking.id).all()
+        booking.photo_count = len(booking_photos)
+        booking.photos = booking_photos  # Add photos to booking object
+        
         bookings_list.append({
             'id': booking.id,
             'booking_date_and_time': booking.booking_date_and_time.isoformat() if booking.booking_date_and_time else None,
             'type': booking.type,
             'status': booking.status,
-            'photographer_name': booking.photographer.name if booking.photographer else 'Unknown'
+            'photographer_name': booking.photographer.name if booking.photographer else 'Unknown',
+            'photo_count': booking.photo_count  # Add photo count to JSON
         })
     
-    # Get photos of this client, grouped by photographer
+    # Get ALL photos of this client, grouped by photographer
     photos = Photo.query.filter_by(user_id=user.id).order_by(Photo.uploaded_at.desc()).all()
     
     photos_by_photographer = {}
@@ -713,3 +718,81 @@ def delete_booking(booking_id):
     if user.role == 'photographer':
         return redirect(url_for('main.photographer_dashboard'))
     return redirect(url_for('main.client_dashboard'))
+
+@main.route('/debug/photos/<int:booking_id>')
+def debug_photos(booking_id):
+    """Debug route to check photos"""
+    if 'user_id' not in session:
+        return "Not logged in"
+    
+    booking = Booking.query.get_or_404(booking_id)
+    photos = Photo.query.filter_by(booking_id=booking_id).all()
+    
+    debug_info = {
+        'booking_id': booking_id,
+        'client_id': booking.client_id,
+        'photographer_id': booking.photographer_id,
+        'photo_count': len(photos),
+        'photos': []
+    }
+    
+    for photo in photos:
+        debug_info['photos'].append({
+            'id': photo.id,
+            'user_id': photo.user_id,
+            'photographer_id': photo.photographer_id,
+            'booking_id': photo.booking_id,
+            'image_url': photo.image_url,
+            'title': photo.title
+        })
+    
+    return jsonify(debug_info)
+
+@main.route('/debug/all-bookings')
+def debug_all_bookings():
+    """Debug route to see all bookings"""
+    if 'user_id' not in session:
+        return "Not logged in"
+    
+    bookings = Booking.query.all()
+    
+    booking_list = []
+    for booking in bookings:
+        booking_list.append({
+            'id': booking.id,
+            'client_id': booking.client_id,
+            'photographer_id': booking.photographer_id,
+            'date': booking.booking_date_and_time.strftime('%Y-%m-%d %H:%M') if booking.booking_date_and_time else None,
+            'status': booking.status,
+            'photo_count': Photo.query.filter_by(booking_id=booking.id).count()
+        })
+    
+    return jsonify({
+        'total_bookings': len(bookings),
+        'bookings': booking_list
+    })
+
+@main.route('/debug/all-photos')
+def debug_all_photos():
+    """Debug route to see ALL photos in database"""
+    if 'user_id' not in session:
+        return "Not logged in"
+    
+    photos = Photo.query.all()
+    
+    photo_list = []
+    for photo in photos:
+        photo_list.append({
+            'id': photo.id,
+            'user_id': photo.user_id,
+            'photographer_id': photo.photographer_id,
+            'booking_id': photo.booking_id,
+            'image_url': photo.image_url,
+            'title': photo.title,
+            'uploaded_at': photo.uploaded_at.strftime('%Y-%m-%d %H:%M:%S') if photo.uploaded_at else None
+        })
+    
+    return jsonify({
+        'total_photos': len(photos),
+        'photos': photo_list
+    })

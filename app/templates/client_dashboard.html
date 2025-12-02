@@ -147,6 +147,17 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- Photos Section -->
+                <div class="booking-photos">
+                    <h4>Photos ({{ booking.photo_count }})</h4>
+                    <div class="photo-grid">
+                        {% for photo in booking.photos %}
+                            <img src="{{ photo.image_url }}" alt="{{ photo.title }}" style="width: 100px; height: 100px; object-fit: cover; margin: 5px;">
+                        {% endfor %}
+                    </div>
+                    <a href="{{ url_for('main.view_booking_photos', booking_id=booking.id) }}" class="btn">View All Photos</a>
+                </div>
             </div>
             {% endfor %}
         {% else %}
