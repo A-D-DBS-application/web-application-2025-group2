@@ -22,18 +22,12 @@ def get_supabase_client() -> Client:
 @main.route('/')
 def index():
     # Get photographers from database
-    photographers = User.query.filter_by(role='photographer').limit(3).all()
-    
-    # Get photos for each photographer
+    photographers = User.query.filter_by(role='photographer').all()
     photographer_photos = {}
     for photographer in photographers:
-        photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).limit(4).all()
+        photos = Photo.query.filter_by(photographer_id=photographer.id).all()
         photographer_photos[photographer.id] = photos
-    
-    if 'user_id' in session:
-        user = User.query.get(session['user_id'])
-        return render_template('index.html', username=user.name if user else None, user=user, photographers=photographers, photographer_photos=photographer_photos)
-    return render_template('index.html', username=None, user=None, photographers=photographers, photographer_photos=photographer_photos)
+    return render_template('index.html', photographers=photographers, photographer_photos=photographer_photos)
 
 @main.route('/register', methods=['GET', 'POST'])
 def register():
@@ -96,23 +90,20 @@ def photographers():
     all_photographers = User.query.filter_by(role='photographer').all()
     photographer_data = []
     for photographer in all_photographers:
-        photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).limit(6).all()
+        photos = Photo.query.filter_by(photographer_id=photographer.id).all()
         photographer_data.append({
-            'photographer': photographer,
-            'photos': photos
+            'id': photographer.id,
+            'name': photographer.name,
+            'email': photographer.email,
+            'photos': [{'url': photo.image_url, 'id': photo.id} for photo in photos]
         })
     return render_template('photographers.html', photographers=photographer_data)
 
 @main.route('/photographer/<int:photographer_id>')
 def photographer_profile(photographer_id):
-    """View photographer profile and book"""
     photographer = User.query.get_or_404(photographer_id)
-    if photographer.role != 'photographer':
-        flash('Invalid photographer')
-        return redirect(url_for('main.index'))
-    
-    photos = Photo.query.filter_by(photographer_id=photographer.id).order_by(Photo.uploaded_at.desc()).all()
-    return render_template('photographer_profile.html', photographer=photographer, photos=photos)
+    photographer_photos = Photo.query.filter_by(photographer_id=photographer_id).all()
+    return render_template('photographer_profile.html', photographer=photographer, photographer_photos=photographer_photos)
 
 @main.route('/api/photographer-slots/<int:photographer_id>')
 def get_photographer_slots(photographer_id):
@@ -740,3 +731,26 @@ def delete_booking(booking_id):
     if user.role == 'photographer':
         return redirect(url_for('main.photographer_dashboard'))
     return redirect(url_for('main.client_dashboard'))
+
+# Debug routes
+@main.route('/debug/all-photos')
+def debug_all_photos():
+    photos = Photo.query.all()
+    photos_data = []
+    for photo in photos:
+        photos_data.append({
+            'id': photo.photo_id,
+            'user_id': photo.user_id,
+            'photographer_id': photo.photographer_id,
+            'booking_id': str(photo.booking_id) if photo.booking_id else None,
+            'image_url': photo.image_url,
+            'title': photo.title
+        })
+    return jsonify({
+        'total_photos': len(photos),
+        'photos': photos_data
+    })
+
+@main.route('/debug/session')
+def debug_session():
+    return jsonify(dict(session))

@@ -47,6 +47,28 @@
         .profile-header { grid-template-columns: 1fr; text-align: center; }
         .content-grid { grid-template-columns: 1fr; }
     }
+
+    .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.portfolio-item {
+    aspect-ratio: 1;
+    background: #f3f4f6;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.portfolio-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 </style>
 {% endblock %}
 
@@ -80,17 +102,24 @@
                 <p class="section-value">{{ photographer.bio or 'Passionate photographer with years of experience capturing beautiful moments. Specializing in creating timeless memories through professional photography.' }}</p>
             </div>
 
-            <div class="card">
+            <div class="card portfolio-section">
                 <h2 class="card-title">Portfolio</h2>
-                {% if photos %}
-                <div class="gallery-grid">
-                    {% for photo in photos[:9] %}
-                    <div class="gallery-item">📸</div>
-                    {% endfor %}
+                <div class="portfolio-grid">
+                    {% if photographer_photos %}
+                        {% for photo in photographer_photos %}
+                        <div class="portfolio-item">
+                            <img src="{{ photo.image_url }}" alt="{{ photo.title or 'Portfolio photo' }}">
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="portfolio-item">
+                            <span>📷</span>
+                        </div>
+                        <div class="portfolio-item">
+                            <span>📷</span>
+                        </div>
+                    {% endif %}
                 </div>
-                {% else %}
-                <p class="section-value" style="color: #64748B;">No photos uploaded yet.</p>
-                {% endif %}
             </div>
         </div>
 
