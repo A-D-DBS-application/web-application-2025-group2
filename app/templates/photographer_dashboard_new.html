@@ -40,12 +40,35 @@
     .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; }
     .empty-title { font-size: 1.5rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem; }
     .empty-text { color: #64748B; margin-bottom: 2rem; }
+    
+    .availability-section { background: #FFF; border-radius: 16px; padding: 2rem; margin: 2rem auto; max-width: 1280px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: #1E293B; }
+    .add-availability-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end; margin-bottom: 2rem; }
+    .form-group-inline { display: flex; flex-direction: column; }
+    .form-group-inline label { font-size: 0.875rem; font-weight: 600; color: #64748B; margin-bottom: 0.5rem; }
+    .form-group-inline input { padding: 0.75rem; border: 2px solid #E2E8F0; border-radius: 8px; font-size: 0.9375rem; }
+    .form-group-inline input:focus { outline: none; border-color: #2563EB; }
+    .btn-add { padding: 0.75rem 1.5rem; background: #10B981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-add:hover { background: #059669; }
+    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+    .slot-card { background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 12px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+    .slot-info { flex: 1; }
+    .slot-date { font-weight: 700; color: #1E293B; margin-bottom: 0.25rem; }
+    .slot-time { color: #64748B; font-size: 0.875rem; }
+    .slot-status { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .status-available { background: #D1FAE5; color: #065F46; }
+    .status-booked { background: #FEE2E2; color: #991B1B; }
+    .btn-delete-slot { background: #EF4444; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; }
+    .btn-delete-slot:hover { background: #DC2626; }
+    
     @media (max-width: 968px) {
         .booking-card { flex-direction: column; text-align: center; }
         .booking-left { flex-direction: column; width: 100%; }
         .booking-right { flex-direction: column; width: 100%; }
         .booking-details { justify-content: center; flex-wrap: wrap; }
         .booking-actions { justify-content: center; width: 100%; flex-direction: column; }
+        .add-availability-form { grid-template-columns: 1fr; }
     }
 </style>
 {% endblock %}
@@ -131,4 +154,54 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Availability Management Section -->
+<div class="availability-section">
+    <div class="section-header">
+        <h2 class="section-title">📅 Manage Availability</h2>
+    </div>
+    
+    <form method="POST" action="{{ url_for('main.add_availability_slot') }}" class="add-availability-form">
+        <div class="form-group-inline">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+        <div class="form-group-inline">
+            <label for="start_time">Start Time</label>
+            <input type="time" id="start_time" name="start_time" required>
+        </div>
+        <div class="form-group-inline">
+            <label for="end_time">End Time</label>
+            <input type="time" id="end_time" name="end_time" required>
+        </div>
+        <button type="submit" class="btn-add">+ Add Slot</button>
+    </form>
+
+    {% set availability_slots = user.availability_slots.order_by('available_date', 'start_time').all() %}
+    {% if availability_slots %}
+    <div class="slots-grid">
+        {% for slot in availability_slots %}
+        <div class="slot-card">
+            <div class="slot-info">
+                <div class="slot-date">{{ slot.available_date.strftime('%d %b %Y') }}</div>
+                <div class="slot-time">{{ slot.start_time }} - {{ slot.end_time }}</div>
+                <span class="slot-status {% if slot.is_available %}status-available{% else %}status-booked{% endif %}">
+                    {% if slot.is_available %}Available{% else %}Booked{% endif %}
+                </span>
+            </div>
+            {% if slot.is_available %}
+            <form method="POST" action="{{ url_for('main.delete_slot', slot_id=slot.id) }}" style="display: inline;" onsubmit="return confirm('Delete this availability slot?');">
+                <button type="submit" class="btn-delete-slot">🗑️</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: #64748B;">
+        <p>No availability slots yet. Add your first slot above!</p>
+    </div>
+    {% endif %}
+</div>
+
 {% endblock %}

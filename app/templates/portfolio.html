@@ -1,43 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ photographer.name }}'s Portfolio - De Kodak</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% extends "base.html" %}
+
+{% block title %}{{ photographer.name }}'s Portfolio - Culex{% endblock %}
+
+{% block extra_styles %}
+<style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
         }
-        nav {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .nav-links { display: flex; gap: 20px; align-items: center; }
-        .nav-links a {
-            color: #333;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            transition: all 0.3s;
-        }
-        .nav-links a:hover { background: rgba(102, 126, 234, 0.1); }
         .container { max-width: 1400px; margin: 0 auto; }
         .portfolio-header {
             background: white;
@@ -187,27 +157,11 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         .hidden { display: none; }
-    </style>
-</head>
-<body>
-    <nav>
-        <div class="logo">DE KODAK</div>
-        <div class="nav-links">
-            <a href="{{ url_for('main.index') }}">Home</a>
-            {% if session.get('user_id') %}
-                {% if session.get('role') == 'photographer' %}
-                    <a href="{{ url_for('main.photographer_dashboard') }}">Dashboard</a>
-                {% else %}
-                    <a href="{{ url_for('main.client_dashboard') }}">Dashboard</a>
-                {% endif %}
-                <a href="{{ url_for('main.logout') }}">Logout</a>
-            {% else %}
-                <a href="{{ url_for('main.login') }}">Login</a>
-                <a href="{{ url_for('main.register') }}">Register</a>
-            {% endif %}
-        </div>
-    </nav>
+</style>
+{% endblock %}
 
+{% block content %}
+<div style="padding: 20px;">
     <div class="container">
         <div class="portfolio-header">
             <h1>{{ photographer.name }}'s Portfolio</h1>
@@ -287,5 +241,5 @@
             }
         }
     </script>
-</body>
-</html>
+</div>
+{% endblock %}

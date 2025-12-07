@@ -17,6 +17,9 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='user')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    availability_slots = db.relationship('PhotographerAvailability', backref='photographer', lazy='dynamic')
 
 
 class Category(db.Model):
@@ -94,6 +97,9 @@ class PhotographerAvailability(db.Model):
     start_time = db.Column(db.String(10), nullable=False)
     end_time = db.Column(db.String(10), nullable=False)
     is_available = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # Note: 'photographer' backref is defined in User.availability_slots relationship
 
 
 
