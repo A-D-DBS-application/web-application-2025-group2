@@ -56,11 +56,26 @@ class Photo(db.Model):
     photographer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     booking_id = db.Column(UUID(as_uuid=True), db.ForeignKey('bookings.id'), nullable=True)
     title = db.Column(db.String, nullable=True)
+    album_id = db.Column(db.Integer, db.ForeignKey('album.id'), nullable=True)
+    
+    album = db.relationship('Album', backref=db.backref('photos', lazy=True))
     
     # Make 'id' an alias for 'photo_id' so your code still works
     @property
     def id(self):
         return self.photo_id
+
+
+class Album(db.Model):
+    __tablename__ = 'album'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    photographer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    photographer = db.relationship('User', backref=db.backref('albums', lazy=True))
 
 
 class Tag(db.Model):

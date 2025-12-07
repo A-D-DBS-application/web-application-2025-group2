@@ -50,6 +50,7 @@
                 {% if session.get('user_id') %}
                     {% if session.get('user_role') == 'photographer' %}
                         <a href="{{ url_for('main.photographer_dashboard') }}" {% if 'photographer_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
+                        <a href="{{ url_for('main.manage_portfolio') }}" {% if 'portfolio' in request.endpoint %}class="active"{% endif %}>Portfolio</a>
                         <span style="background: #DBEAFE; color: #1E40AF; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">📷 Photographer</span>
                     {% else %}
                         <a href="{{ url_for('main.client_dashboard') }}" {% if 'client_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>

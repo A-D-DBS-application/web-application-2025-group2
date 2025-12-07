@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import User, Booking, PhotographerAvailability, Photo
+from app.models import User, Booking, PhotographerAvailability, Photo, Album
 from datetime import datetime, timedelta
 import json
 import os
@@ -754,3 +754,194 @@ def debug_all_photos():
 @main.route('/debug/session')
 def debug_session():
     return jsonify(dict(session))
+
+
+# Portfolio Routes
+@main.route('/portfolio/<int:photographer_id>')
+def view_portfolio(photographer_id):
+    """Public portfolio view for clients"""
+    photographer = User.query.get_or_404(photographer_id)
+    if photographer.role != 'photographer':
+        flash('User is not a photographer', 'danger')
+        return redirect(url_for('main.index'))
+    
+    albums = Album.query.filter_by(photographer_id=photographer_id).order_by(Album.created_at.desc()).all()
+    total_photos = sum(len(album.photos) for album in albums)
+    
+    return render_template('portfolio.html', 
+                         photographer=photographer, 
+                         albums=albums,
+                         total_photos=total_photos)
+
+
+@main.route('/portfolio/manage')
+def manage_portfolio():
+    """Photographer's portfolio management interface"""
+    if 'user_id' not in session:
+        flash('Please login to access this page', 'danger')
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if user.role != 'photographer':
+        flash('Only photographers can manage portfolios', 'danger')
+        return redirect(url_for('main.index'))
+    
+    albums = Album.query.filter_by(photographer_id=user.id).order_by(Album.created_at.desc()).all()
+    return render_template('manage_portfolio.html', user=user, albums=albums)
+
+
+@main.route('/portfolio/album/create', methods=['POST'])
+def create_album():
+    """Create a new album/category"""
+    if 'user_id' not in session:
+        flash('Please login first', 'danger')
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if user.role != 'photographer':
+        flash('Only photographers can create albums', 'danger')
+        return redirect(url_for('main.index'))
+    
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    
+    if not name:
+        flash('Album name is required', 'danger')
+        return redirect(url_for('main.manage_portfolio'))
+    
+    new_album = Album(
+        photographer_id=user.id,
+        name=name,
+        description=description if description else None
+    )
+    
+    db.session.add(new_album)
+    db.session.commit()
+    
+    flash(f'Album "{name}" created! Now add your photos.', 'success')
+    # Redirect directly to upload page for the new album
+    return redirect(url_for('main.upload_to_album', album_id=new_album.id))
+
+
+@main.route('/portfolio/album/<int:album_id>/upload', methods=['GET', 'POST'])
+def upload_to_album(album_id):
+    """Upload photos to a specific album"""
+    if 'user_id' not in session:
+        flash('Please login first', 'danger')
+        return redirect(url_for('main.login'))
+    
+    album = Album.query.get_or_404(album_id)
+    
+    # Check if user is the album owner
+    if album.photographer_id != session['user_id']:
+        flash('You can only upload to your own albums', 'danger')
+        return redirect(url_for('main.manage_portfolio'))
+    
+    if request.method == 'POST':
+        if 'photo_file' not in request.files:
+            flash('No file selected', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['photo_file']
+        if file.filename == '':
+            flash('No file selected', 'danger')
+            return redirect(request.url)
+        
+        # Validate file extension
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+            flash('Invalid file type. Please upload an image file (png, jpg, jpeg, gif, webp)', 'danger')
+            return redirect(request.url)
+        
+        try:
+            # Generate unique filename
+            original_filename = secure_filename(file.filename)
+            file_ext = original_filename.rsplit('.', 1)[1].lower()
+            unique_filename = f"{uuid.uuid4()}.{file_ext}"
+            
+            # Upload to Supabase Storage
+            supabase = get_supabase_client()
+            bucket_name = current_app.config['SUPABASE_STORAGE_BUCKET']
+            
+            # Path: albums/{album_id}/{unique_filename}
+            storage_path = f"albums/{album_id}/{unique_filename}"
+            
+            # Read file data
+            file_data = file.read()
+            
+            # Upload to Supabase
+            response = supabase.storage.from_(bucket_name).upload(
+                path=storage_path,
+                file=file_data,
+                file_options={"content-type": file.content_type}
+            )
+            
+            # Get public URL
+            public_url = supabase.storage.from_(bucket_name).get_public_url(storage_path)
+            
+            # Create Photo record
+            title = request.form.get('title', '').strip()
+            new_photo = Photo(
+                user_id=session['user_id'],
+                photographer_id=session['user_id'],
+                album_id=album_id,
+                image_url=public_url,
+                title=title if title else None
+            )
+            
+            db.session.add(new_photo)
+            db.session.commit()
+            
+            flash('Photo uploaded successfully!', 'success')
+            return redirect(url_for('main.upload_to_album', album_id=album_id))
+            
+        except Exception as e:
+            flash(f'Error uploading photo: {str(e)}', 'danger')
+            return redirect(request.url)
+    
+    return render_template('upload_to_album.html', album=album)
+
+
+@main.route('/portfolio/album/<int:album_id>/delete', methods=['POST'])
+def delete_album(album_id):
+    """Delete an album and all its photos"""
+    if 'user_id' not in session:
+        flash('Please login first', 'danger')
+        return redirect(url_for('main.login'))
+    
+    album = Album.query.get_or_404(album_id)
+    
+    # Check if user is the album owner
+    if album.photographer_id != session['user_id']:
+        flash('You can only delete your own albums', 'danger')
+        return redirect(url_for('main.manage_portfolio'))
+    
+    try:
+        supabase = get_supabase_client()
+        bucket_name = current_app.config['SUPABASE_STORAGE_BUCKET']
+        
+        # Delete all photos from storage and database
+        for photo in album.photos:
+            # Extract file path from URL
+            if photo.image_url:
+                url_parts = photo.image_url.split(f'{bucket_name}/')
+                if len(url_parts) > 1:
+                    file_path = url_parts[1]
+                    try:
+                        supabase.storage.from_(bucket_name).remove([file_path])
+                    except:
+                        pass  # Continue even if storage deletion fails
+            
+            db.session.delete(photo)
+        
+        # Delete album
+        album_name = album.name
+        db.session.delete(album)
+        db.session.commit()
+        
+        flash(f'Album "{album_name}" and all its photos deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting album: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.manage_portfolio'))
