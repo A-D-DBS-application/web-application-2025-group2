@@ -249,9 +249,16 @@
             {% endif %}
         </div>
         
-        <a href="{{ url_for('main.photographer_profile', photographer_id=item.id) }}" class="view-profile-btn">
-            View Profile & Book
-        </a>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; padding: 0 1rem 1rem;">
+            <a href="{{ url_for('main.view_portfolio', photographer_id=item.id) }}" 
+               style="background: #10B981; color: white; padding: 0.75rem; text-align: center; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.3s ease;">
+                📸 Portfolio
+            </a>
+            <a href="{{ url_for('main.photographer_profile', photographer_id=item.id) }}" 
+               style="background: #6366F1; color: white; padding: 0.75rem; text-align: center; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.3s ease;">
+                📅 Book
+            </a>
+        </div>
     </div>
     {% endfor %}
 </div>
