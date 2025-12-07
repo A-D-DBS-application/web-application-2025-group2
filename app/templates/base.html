@@ -50,8 +50,10 @@
                 {% if session.get('user_id') %}
                     {% if session.get('user_role') == 'photographer' %}
                         <a href="{{ url_for('main.photographer_dashboard') }}" {% if 'photographer_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
+                        <span style="background: #DBEAFE; color: #1E40AF; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">📷 Photographer</span>
                     {% else %}
                         <a href="{{ url_for('main.client_dashboard') }}" {% if 'client_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
+                        <span style="background: #FEF3C7; color: #92400E; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">👤 Client</span>
                     {% endif %}
                     <form action="{{ url_for('main.logout') }}" method="POST" style="display: inline;">
                         <button type="submit" class="btn btn-secondary">Logout</button>

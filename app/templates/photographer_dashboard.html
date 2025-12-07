@@ -156,6 +156,7 @@
         <div class="logo">De Kodak</div>
         <div class="nav-links">
             <span>Welcome, {{ user.name }}! 📷</span>
+            <span style="background: #DBEAFE; color: #1E40AF; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600; margin-left: 0.5rem;">📷 Photographer</span>
             <a href="{{ url_for('main.index') }}">Home</a>
             <a href="{{ url_for('main.book') }}">Book Photographer</a>
             <form method="POST" action="{{ url_for('main.logout') }}" style="display:inline;">
