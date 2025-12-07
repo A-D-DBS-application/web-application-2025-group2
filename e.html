@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Culex - Photography Booking{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; line-height: 1.5; color: #1E293B; background: #FFFFFF; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 2rem; }
+        header { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .header-content { max-width: 1280px; margin: 0 auto; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
+        .logo-icon { width: 40px; height: 40px; background: #1E3A8A; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 24px; }
+        .logo-text { font-size: 1.5rem; font-weight: 700; color: #1E293B; letter-spacing: -0.02em; }
+        nav { display: flex; align-items: center; gap: 2rem; }
+        nav a { text-decoration: none; font-size: 0.9375rem; font-weight: 500; color: #475569; padding: 0.5rem 0; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        nav a:hover, nav a.active { color: #2563EB; border-bottom-color: #2563EB; font-weight: 600; }
+        .btn { border: none; border-radius: 12px; padding: 0.75rem 1.5rem; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #2563EB; color: #FFF; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn-primary:hover { background: #1E40AF; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,99,235,0.4); }
+        .btn-secondary { background: transparent; color: #2563EB; border: 2px solid #2563EB; }
+        .btn-secondary:hover { background: #EFF6FF; }
+        footer { background: #1E293B; color: #CBD5E1; padding: 3rem 0 2rem; margin-top: 4rem; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-bottom: 2rem; max-width: 1280px; margin-left: auto; margin-right: auto; padding: 0 2rem; }
+        .footer-section h3 { color: #FFF; font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+        .footer-section a { color: #CBD5E1; text-decoration: none; display: block; margin-bottom: 0.5rem; font-size: 0.875rem; }
+        .footer-section a:hover { color: #2563EB; }
+        .footer-bottom { border-top: 1px solid #334155; padding-top: 1.5rem; text-align: center; font-size: 0.875rem; max-width: 1280px; margin: 0 auto; padding-left: 2rem; padding-right: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1E293B; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.9375rem; font-family: inherit; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .error-message { background: #FEE2E2; color: #991B1B; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #DC2626; }
+        .success-message { background: #D1FAE5; color: #065F46; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #10B981; }
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="{{ url_for('main.index') }}" class="logo">
+                <div class="logo-icon">📷</div>
+                <span class="logo-text">Culex</span>
+            </a>
+            <nav>
+                <a href="{{ url_for('main.index') }}" {% if request.endpoint == 'main.index' %}class="active"{% endif %}>Home</a>
+                <a href="{{ url_for('main.photographers') }}" {% if 'photographer' in request.endpoint and request.endpoint != 'main.photographer_dashboard' %}class="active"{% endif %}>Find Photographers</a>
+                {% if session.get('user_id') %}
+                    {% if session.get('user_role') == 'photographer' %}
+                        <a href="{{ url_for('main.photographer_dashboard') }}" {% if 'photographer_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
+                    {% else %}
+                        <a href="{{ url_for('main.client_dashboard') }}" {% if 'client_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
+                    {% endif %}
+                    <form action="{{ url_for('main.logout') }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('main.login') }}" class="btn btn-secondary">Sign In</a>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-primary">Get Started</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <main>{% block content %}{% endblock %}</main>
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-section">
+                <h3>Culex</h3>
+                <p style="font-size: 0.875rem;">Professional photography booking made simple.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Platform</h3>
+                <a href="#">For Photographers</a>
+                <a href="#">For Clients</a>
+            </div>
+            <div class="footer-section">
+                <h3>Support</h3>
+                <a href="#">Help Center</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Culex. All rights reserved.</p>
+        </div>
+    </footer>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

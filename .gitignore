@@ -1,13 +1,18 @@
-# Python
+.env
 __pycache__/
 *.pyc
-
-# Virtual env
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
 .venv/
-
-# Secrets
-.env
-
-# IDE
-.vscode/
-.idea/
+venv/
+instance/
+.pytest_cache/
+.coverage
+htmlcov/

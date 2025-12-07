@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Flask Server",
+			"type": "shell",
+			"command": "lsof -ti:5000 | xargs kill -9 2>/dev/null; sleep 1; python run.py",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
