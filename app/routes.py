@@ -5,12 +5,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Booking, PhotographerAvailability, Photo, Album, Rating
-from app.constants import BOOKING_STATUS_COMPLETED
+from app.constants import BOOKING_STATUS_COMPLETED, ROLE_PHOTOGRAPHER
 from datetime import datetime, timedelta
 import json
 import os
 import uuid
 from supabase import create_client, Client
+from functools import wraps
 
 main = Blueprint('main', __name__)
 
@@ -18,6 +19,40 @@ def get_supabase_client() -> Client:
     """Create and return Supabase client"""
     url = current_app.config['SUPABASE_URL']
     key = current_app.config['SUPABASE_KEY']
+    return create_client(url, key)
+
+# Authentication decorators
+def login_required(f):
+    """Decorator to require login"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please login to access this page.', 'warning')
+            return redirect(url_for('main.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def photographer_required(f):
+    """Decorator to require photographer role"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please login to access this page.', 'warning')
+            return redirect(url_for('main.login'))
+        
+        user = User.query.get(session['user_id'])
+        if not user or user.role != ROLE_PHOTOGRAPHER:
+            flash('Access denied. Photographers only.', 'danger')
+            return redirect(url_for('main.index'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def get_current_user():
+    """Helper to get current logged-in user"""
+    if 'user_id' not in session:
+        return None
+    return User.query.get(session['user_id'])
     return create_client(url, key)
 
 @main.route('/')
@@ -320,14 +355,9 @@ def update_booking(booking_id):
     return redirect(url_for('main.booking_detail', booking_id=booking_id))
 
 @main.route('/dashboard/photographer')
+@photographer_required
 def photographer_dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied. Photographers only.')
-        return redirect(url_for('main.index'))
+    user = get_current_user()
     
     # Get bookings from clients (where this user is the photographer)
     bookings = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
@@ -421,14 +451,9 @@ def add_availability_slot():
     return redirect(url_for('main.photographer_dashboard'))
 
 @main.route('/dashboard/photographer/delete-slot/<int:slot_id>', methods=['POST'])
+@photographer_required
 def delete_slot(slot_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied. Photographers only.')
-        return redirect(url_for('main.index'))
+    user = get_current_user()
     
     # Get the slot
     slot = PhotographerAvailability.query.get_or_404(slot_id)
@@ -451,13 +476,9 @@ def delete_slot(slot_id):
     return redirect(url_for('main.photographer_dashboard'))
 
 @main.route('/dashboard/client')
+@login_required
 def client_dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user:
-        return redirect(url_for('main.login'))
+    user = get_current_user()
     
     # Get bookings with photographer information (eager loading)
     bookings = db.session.query(Booking).join(User, Booking.photographer_id == User.id).filter(
@@ -610,14 +631,9 @@ def upload_photos(booking_id):
     return render_template('upload_photos_new.html', booking=booking, photos=photos)
 
 @main.route('/dashboard/photographer/delete-photo/<int:photo_id>', methods=['POST'])
+@photographer_required
 def delete_photo(photo_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied. Photographers only.')
-        return redirect(url_for('main.index'))
+    user = get_current_user()
     
     # Get the photo
     photo = Photo.query.get_or_404(photo_id)
@@ -660,13 +676,9 @@ def delete_photo(photo_id):
     return redirect(url_for('main.photographer_dashboard'))
 
 @main.route('/booking/photos/<booking_id>')
+@login_required
 def view_booking_photos(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user:
-        return redirect(url_for('main.login'))
+    user = get_current_user()
     
     # Get the booking
     booking = Booking.query.get_or_404(booking_id)
@@ -688,14 +700,10 @@ def view_booking_photos(booking_id):
                          photos=photos)
 
 @main.route('/booking/<booking_id>/rate', methods=['GET', 'POST'])
+@login_required
 def rate_booking(booking_id):
     """Allow client to rate a completed booking"""
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user:
-        return redirect(url_for('main.login'))
+    user = get_current_user()
     
     booking = Booking.query.get_or_404(booking_id)
     
@@ -747,13 +755,9 @@ def rate_booking(booking_id):
                          existing_rating=existing_rating)
 
 @main.route('/booking/cancel/<booking_id>', methods=['POST'])
+@login_required
 def cancel_booking(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user:
-        return redirect(url_for('main.login'))
+    user = get_current_user()
     
     # Get the booking
     booking = Booking.query.get_or_404(booking_id)
@@ -783,13 +787,9 @@ def cancel_booking(booking_id):
     return redirect(url_for('main.client_dashboard'))
 
 @main.route('/booking/delete/<booking_id>', methods=['POST'])
+@login_required
 def delete_booking(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user:
-        return redirect(url_for('main.login'))
+    user = get_current_user()
     
     # Get the booking
     booking = Booking.query.get_or_404(booking_id)
