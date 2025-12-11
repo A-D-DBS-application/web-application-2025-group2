@@ -194,7 +194,34 @@
 {% block content %}
 <div class="photographers-page-header">
     <h1>Find Your Perfect Photographer</h1>
-    <p>Browse our curated list of professional photographers and book your next session</p>
+    <p>Browse our curated list of professional photographers - intelligently ranked for you</p>
+    
+    <!-- Search filters -->
+    <div style="max-width: 600px; margin: 2rem auto;">
+        <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+            <select name="event_type" style="padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: white; font-size: 1rem;">
+                <option value="">All Event Types</option>
+                <option value="wedding" {% if event_type == 'wedding' %}selected{% endif %}>Wedding</option>
+                <option value="portrait" {% if event_type == 'portrait' %}selected{% endif %}>Portrait</option>
+                <option value="corporate" {% if event_type == 'corporate' %}selected{% endif %}>Corporate</option>
+                <option value="funeral" {% if event_type == 'funeral' %}selected{% endif %}>Funeral</option>
+                <option value="birthday" {% if event_type == 'birthday' %}selected{% endif %}>Birthday</option>
+            </select>
+            
+            <input type="date" name="date" value="{{ desired_date or '' }}" 
+                   style="padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: white;">
+            
+            <button type="submit" style="padding: 0.75rem 2rem; border-radius: 8px; border: none; background: white; color: #667eea; font-weight: 600; cursor: pointer;">
+                🔍 Search
+            </button>
+            
+            {% if event_type or desired_date %}
+            <a href="{{ url_for('main.photographers') }}" style="padding: 0.75rem 2rem; border-radius: 8px; background: rgba(255,255,255,0.2); color: white; text-decoration: none;">
+                Clear
+            </a>
+            {% endif %}
+        </form>
+    </div>
 </div>
 
 <div class="photographers-grid">
@@ -207,25 +234,45 @@
         <div class="photographer-info">
             <div class="photographer-name">{{ item.name }}</div>
             <div class="photographer-email">{{ item.email }}</div>
+            
+            <!-- Relevance score badge -->
+            {% if item.relevance_score %}
+            <div style="display: inline-block; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600; margin: 0.5rem 0;">
+                🎯 Match Score: {{ item.relevance_score }}%
+            </div>
+            {% endif %}
+            
             <div class="photographer-category">Professional Photography</div>
-            <div class="photographer-bio">Passionate photographer capturing moments that last forever.</div>
             
             <div class="photographer-rating">
-                <span>⭐</span>
-                <span>⭐</span>
-                <span>⭐</span>
-                <span>⭐</span>
-                <span>⭐</span>
+                {% if item.stats and item.stats.average_rating %}
+                    {% for i in range(5) %}
+                        {% if i < item.stats.average_rating %}
+                            <span>⭐</span>
+                        {% else %}
+                            <span style="color: #E5E7EB;">⭐</span>
+                        {% endif %}
+                    {% endfor %}
+                    <span style="color: #64748B; font-size: 0.875rem; margin-left: 0.5rem;">
+                        ({{ item.stats.average_rating }} / {{ item.stats.ratings_count }} reviews)
+                    </span>
+                {% else %}
+                    <span style="color: #94A3B8; font-size: 0.875rem;">No ratings yet</span>
+                {% endif %}
             </div>
             
             <div class="photographer-stats">
                 <div class="stat-item">
-                    <div class="stat-value">€150</div>
-                    <div class="stat-label">Per Hour</div>
+                    <div class="stat-value">{{ item.stats.albums_count if item.stats else 0 }}</div>
+                    <div class="stat-label">Albums</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">{{ item.photos|length }}</div>
+                    <div class="stat-value">{{ item.stats.photos_count if item.stats else item.photos|length }}</div>
                     <div class="stat-label">Photos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ item.stats.completed_bookings if item.stats else 0 }}</div>
+                    <div class="stat-label">Bookings</div>
                 </div>
             </div>
         </div>

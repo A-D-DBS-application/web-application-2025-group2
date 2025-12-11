@@ -4,7 +4,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import User, Booking, PhotographerAvailability, Photo, Album
+from app.models import User, Booking, PhotographerAvailability, Photo, Album, Rating
+from app.constants import BOOKING_STATUS_COMPLETED
 from datetime import datetime, timedelta
 import json
 import os
@@ -86,18 +87,47 @@ def logout():
 
 @main.route('/photographers')
 def photographers():
-    """Browse all photographers"""
-    all_photographers = User.query.filter_by(role='photographer').all()
+    """Browse all photographers with intelligent ranking"""
+    from app.algorithms import rank_photographers, get_photographer_stats
+    
+    # Get optional search parameters
+    event_type = request.args.get('event_type')
+    desired_date_str = request.args.get('date')
+    
+    # Parse desired date if provided
+    desired_date = None
+    if desired_date_str:
+        try:
+            from datetime import datetime
+            desired_date = datetime.strptime(desired_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    # Get ranked photographers using the algorithm
+    ranked_photographers = rank_photographers(
+        event_type=event_type,
+        desired_date=desired_date
+    )
+    
     photographer_data = []
-    for photographer in all_photographers:
-        photos = Photo.query.filter_by(photographer_id=photographer.id).all()
+    for photographer, score, breakdown in ranked_photographers:
+        photos = Photo.query.filter_by(photographer_id=photographer.id).limit(4).all()
+        stats = get_photographer_stats(photographer.id)
+        
         photographer_data.append({
             'id': photographer.id,
             'name': photographer.name,
             'email': photographer.email,
-            'photos': [{'url': photo.image_url, 'id': photo.id} for photo in photos]
+            'photos': [{'url': photo.image_url, 'id': photo.id} for photo in photos],
+            'relevance_score': round(score, 1),
+            'score_breakdown': breakdown,
+            'stats': stats
         })
-    return render_template('photographers.html', photographers=photographer_data)
+    
+    return render_template('photographers.html', 
+                         photographers=photographer_data,
+                         event_type=event_type,
+                         desired_date=desired_date_str)
 
 @main.route('/photographer/<int:photographer_id>')
 def photographer_profile(photographer_id):
@@ -656,6 +686,65 @@ def view_booking_photos(booking_id):
                          user=user,
                          booking=booking,
                          photos=photos)
+
+@main.route('/booking/<booking_id>/rate', methods=['GET', 'POST'])
+def rate_booking(booking_id):
+    """Allow client to rate a completed booking"""
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return redirect(url_for('main.login'))
+    
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security: only client can rate
+    if booking.client_id != user.id:
+        flash('You can only rate your own bookings.', 'danger')
+        return redirect(url_for('main.client_dashboard'))
+    
+    # Check if booking is completed
+    if booking.status != BOOKING_STATUS_COMPLETED:
+        flash('You can only rate completed bookings.', 'warning')
+        return redirect(url_for('main.client_dashboard'))
+    
+    # Check if already rated
+    existing_rating = Rating.query.filter_by(booking_id=booking_id).first()
+    
+    if request.method == 'POST':
+        if existing_rating:
+            flash('You have already rated this booking.', 'warning')
+            return redirect(url_for('main.client_dashboard'))
+        
+        rating_value = request.form.get('rating', type=int)
+        review_text = request.form.get('review', '').strip()
+        
+        if not rating_value or rating_value < 1 or rating_value > 5:
+            flash('Please select a rating between 1 and 5 stars.', 'danger')
+            return redirect(request.url)
+        
+        # Create rating
+        new_rating = Rating(
+            booking_id=booking.id,
+            client_id=user.id,
+            photographer_id=booking.photographer_id,
+            rating=rating_value,
+            review=review_text if review_text else None
+        )
+        
+        db.session.add(new_rating)
+        db.session.commit()
+        
+        flash('Thank you for your review!', 'success')
+        return redirect(url_for('main.client_dashboard'))
+    
+    # GET request - show rating form
+    photographer = User.query.get(booking.photographer_id)
+    return render_template('rate_booking.html',
+                         booking=booking,
+                         photographer=photographer,
+                         existing_rating=existing_rating)
 
 @main.route('/booking/cancel/<booking_id>', methods=['POST'])
 def cancel_booking(booking_id):
