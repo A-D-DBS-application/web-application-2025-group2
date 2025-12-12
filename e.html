@@ -43,16 +43,15 @@
         color: #90caf9 !important;
       }
       .darkmode-toggle-btn {
-        position: fixed;
-        top: 20px;
-        right: 24px;
-        z-index: 1000;
         background: transparent;
         border: none;
-        font-size: 2.5rem;
+        font-size: 2rem;
         cursor: pointer;
         transition: color 0.2s;
         color: #333;
+        margin-left: 1rem;
+        padding: 0 0.5rem;
+        align-self: center;
       }
       body.dark-mode .darkmode-toggle-btn {
         color: #ffe066;
@@ -83,6 +82,13 @@
                     <a href="{{ url_for('main.login') }}" class="btn btn-secondary">Sign In</a>
                     <a href="{{ url_for('main.register') }}" class="btn btn-primary">Get Started</a>
                 {% endif %}
+                <!-- Darkmode toggle pictogram naast Get Started -->
+                <button
+                  id="darkmode-toggle"
+                  class="darkmode-toggle-btn"
+                  aria-label="Toggle dark mode"
+                  type="button"
+                >🌙</button>
             </nav>
         </div>
     </header>
@@ -120,13 +126,6 @@
         </div>
     </footer>
     {% block extra_scripts %}{% endblock %}
-    <button
-      id="darkmode-toggle"
-      class="darkmode-toggle-btn"
-      aria-label="Toggle dark mode"
-      type="button"
-      style="z-index: 9999;"
-    >🌙</button>
     <script>
       // Dark mode toggle logic
       const btn = document.getElementById('darkmode-toggle');
