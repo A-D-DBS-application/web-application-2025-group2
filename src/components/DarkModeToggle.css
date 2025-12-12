@@ -1,0 +1,15 @@
+.darkmode-toggle-btn {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 1000;
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  color: #333;
+}
+body.dark-mode .darkmode-toggle-btn {
+  color: #ffe066;
+}
