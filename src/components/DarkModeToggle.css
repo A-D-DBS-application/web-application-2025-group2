@@ -5,7 +5,7 @@
   z-index: 1000;
   background: transparent;
   border: none;
-  font-size: 3rem; /* Maak groter indien gewenst */
+  font-size: 2.5rem; /* Normale grootte voor pictogram */
   cursor: pointer;
   transition: color 0.2s;
   color: #333;

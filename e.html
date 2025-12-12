@@ -34,10 +34,63 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         .error-message { background: #FEE2E2; color: #991B1B; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #DC2626; }
         .success-message { background: #D1FAE5; color: #065F46; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #10B981; }
+      /* Dark mode styles */
+      body.dark-mode {
+        background: #181818 !important;
+        color: #f1f1f1 !important;
+      }
+      body.dark-mode a {
+        color: #90caf9 !important;
+      }
+      .darkmode-toggle-btn {
+        position: fixed;
+        top: 20px;
+        right: 24px;
+        z-index: 1000;
+        background: transparent;
+        border: none;
+        font-size: 2.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+        color: #333;
+      }
+      body.dark-mode .darkmode-toggle-btn {
+        color: #ffe066;
+      }
     </style>
     {% block extra_styles %}{% endblock %}
 </head>
 <body>
+    <button
+      id="darkmode-toggle"
+      class="darkmode-toggle-btn"
+      aria-label="Toggle dark mode"
+      type="button"
+    >🌙</button>
+    <script>
+      // Dark mode toggle logic
+      const btn = document.getElementById('darkmode-toggle');
+      function updateIcon() {
+        btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      }
+      btn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        updateIcon();
+      });
+      // Optional: keep mode after refresh
+      if (localStorage.getItem('dark-mode') === 'true') {
+        document.body.classList.add('dark-mode');
+      }
+      updateIcon();
+      document.body.classList.contains('dark-mode')
+        ? localStorage.setItem('dark-mode', 'true')
+        : localStorage.setItem('dark-mode', 'false');
+      btn.addEventListener('click', () => {
+        document.body.classList.contains('dark-mode')
+          ? localStorage.setItem('dark-mode', 'true')
+          : localStorage.setItem('dark-mode', 'false');
+      });
+    </script>
     <header>
         <div class="header-content">
             <a href="{{ url_for('main.index') }}" class="logo">
