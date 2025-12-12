@@ -158,7 +158,7 @@
             <span>Welcome, {{ user.name }}! 📷</span>
             <span style="background: #DBEAFE; color: #1E40AF; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600; margin-left: 0.5rem;">📷 Photographer</span>
             <a href="{{ url_for('main.index') }}">Home</a>
-            <a href="{{ url_for('main.book') }}">Book Photographer</a>
+            <a href="{{ url_for('bookings.book') }}">Book Photographer</a>
             <form method="POST" action="{{ url_for('main.logout') }}" style="display:inline;">
                 <button type="submit">Logout</button>
             </form>
@@ -190,7 +190,7 @@
                             <td>{{ booking.type }}</td>
                             <td>{{ booking.description or '-' }}</td>
                             <td>
-                                <a href="{{ url_for('main.upload_photos', booking_id=booking.id) }}" class="btn-upload">📸 Upload Photos</a>
+                                <a href="{{ url_for('dashboard.upload_photos', booking_id=booking.id) }}" class="btn-upload">📸 Upload Photos</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -228,7 +228,7 @@
             {% else %}
                 <div class="empty-state">
                     <p>You haven't booked any photographers yet</p>
-                    <a href="{{ url_for('main.book') }}" class="btn" style="margin-top: 15px;">Book a Photographer</a>
+                    <a href="{{ url_for('bookings.book') }}" class="btn" style="margin-top: 15px;">Book a Photographer</a>
                 </div>
             {% endif %}
         </div>
@@ -238,7 +238,7 @@
             
             <div style="margin-bottom: 20px;">
                 <h3 style="font-size: 1rem; margin-bottom: 15px;">Add New Slot</h3>
-                <form method="POST" action="{{ url_for('main.add_availability_slot') }}" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: end;">
+                <form method="POST" action="{{ url_for('dashboard.add_availability_slot') }}" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: end;">
                     <div>
                         <label style="font-size: 0.9rem; margin-bottom: 5px; display: block;">Date</label>
                         <input type="date" name="date" required style="padding: 8px; border: 1px solid #e0e0e0; border-radius: 6px;">
@@ -278,7 +278,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <form method="POST" action="{{ url_for('main.delete_slot', slot_id=slot.id) }}" style="display: inline;">
+                                <form method="POST" action="{{ url_for('dashboard.delete_slot', slot_id=slot.id) }}" style="display: inline;">
                                     <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this slot?');">Delete</button>
                                 </form>
                             </td>

@@ -46,14 +46,14 @@
             </a>
             <nav>
                 <a href="{{ url_for('main.index') }}" {% if request.endpoint == 'main.index' %}class="active"{% endif %}>Home</a>
-                <a href="{{ url_for('main.photographers') }}" {% if 'photographer' in request.endpoint and request.endpoint != 'main.photographer_dashboard' %}class="active"{% endif %}>Find Photographers</a>
+                <a href="{{ url_for('main.photographers') }}" {% if 'photographer' in request.endpoint and request.endpoint != 'dashboard.photographer_dashboard' %}class="active"{% endif %}>Find Photographers</a>
                 {% if session.get('user_id') %}
                     {% if session.get('user_role') == 'photographer' %}
-                        <a href="{{ url_for('main.photographer_dashboard') }}" {% if 'photographer_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
-                        <a href="{{ url_for('main.manage_portfolio') }}" {% if 'portfolio' in request.endpoint %}class="active"{% endif %}>Portfolio</a>
+                        <a href="{{ url_for('dashboard.photographer_dashboard') }}" {% if 'photographer_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
+                        <a href="{{ url_for('dashboard.manage_portfolio') }}" {% if 'portfolio' in request.endpoint %}class="active"{% endif %}>Portfolio</a>
                         <span style="background: #DBEAFE; color: #1E40AF; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">📷 Photographer</span>
                     {% else %}
-                        <a href="{{ url_for('main.client_dashboard') }}" {% if 'client_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
+                        <a href="{{ url_for('dashboard.client_dashboard') }}" {% if 'client_dashboard' in request.endpoint %}class="active"{% endif %}>Manage Bookings</a>
                         <span style="background: #FEF3C7; color: #92400E; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">👤 Client</span>
                     {% endif %}
                     <form action="{{ url_for('main.logout') }}" method="POST" style="display: inline;">

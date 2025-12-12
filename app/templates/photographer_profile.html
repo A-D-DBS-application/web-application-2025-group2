@@ -160,7 +160,7 @@
             <p class="modal-subtitle">with {{ photographer.name }}</p>
         </div>
         <div class="modal-body">
-            <form method="POST" action="{{ url_for('main.book') }}">
+            <form method="POST" action="{{ url_for('bookings.book') }}">
                 <input type="hidden" name="photographer_id" value="{{ photographer.id }}">
                 
                 <div class="form-group">

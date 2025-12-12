@@ -65,6 +65,7 @@ def index():
         photographer_photos[photographer.id] = photos
     return render_template('index.html', photographers=photographers, photographer_photos=photographer_photos)
 
+
 @main.route('/register', methods=['GET', 'POST'])
 def register():
     error = None

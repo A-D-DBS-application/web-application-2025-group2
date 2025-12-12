@@ -40,7 +40,7 @@
     .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; }
     .empty-title { font-size: 1.5rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem; }
     .empty-text { color: #64748B; margin-bottom: 2rem; }
-    
+
     .availability-section { background: #FFF; border-radius: 16px; padding: 2rem; margin: 2rem auto; max-width: 1280px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
     .section-title { font-size: 1.5rem; font-weight: 700; color: #1E293B; }
@@ -61,7 +61,7 @@
     .status-booked { background: #FEE2E2; color: #991B1B; }
     .btn-delete-slot { background: #EF4444; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; }
     .btn-delete-slot:hover { background: #DC2626; }
-    
+
     @media (max-width: 968px) {
         .booking-card { flex-direction: column; text-align: center; }
         .booking-left { flex-direction: column; width: 100%; }
@@ -123,19 +123,19 @@
                     {% endif %}
                     <div class="booking-actions">
                         {% if booking.status in ['confirmed', 'pending'] %}
-                        <a href="{{ url_for('main.upload_photos', booking_id=booking.id) }}" class="action-btn action-upload">
+                        <a href="{{ url_for('dashboard.upload_photos', booking_id=booking.id) }}" class="action-btn action-upload">
                             📤 Upload Photos
                         </a>
-                        <form method="POST" action="{{ url_for('main.complete_booking', booking_id=booking.id) }}" style="display: inline;" onsubmit="return confirm('Mark this booking as completed?');">
+                        <form method="POST" action="{{ url_for('dashboard.complete_booking', booking_id=booking.id) }}" style="display: inline;" onsubmit="return confirm('Mark this booking as completed?');">
                             <button type="submit" class="action-btn action-complete">
                                 ✓ Complete
                             </button>
                         </form>
                         {% elif booking.status == 'completed' %}
-                        <a href="{{ url_for('main.upload_photos', booking_id=booking.id) }}" class="action-btn action-upload">
+                        <a href="{{ url_for('dashboard.upload_photos', booking_id=booking.id) }}" class="action-btn action-upload">
                             📤 Manage Photos
                         </a>
-                        <form method="POST" action="{{ url_for('main.delete_booking', booking_id=booking.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this booking? This will also delete all associated photos.');">
+                        <form method="POST" action="{{ url_for('dashboard.delete_booking', booking_id=booking.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this booking? This will also delete all associated photos.');">
                             <button type="submit" class="action-btn action-cancel">
                                 🗑️ Delete
                             </button>
@@ -160,8 +160,8 @@
     <div class="section-header">
         <h2 class="section-title">📅 Manage Availability</h2>
     </div>
-    
-    <form method="POST" action="{{ url_for('main.add_availability_slot') }}" class="add-availability-form">
+
+    <form method="POST" action="{{ url_for('dashboard.add_availability_slot') }}" class="add-availability-form">
         <div class="form-group-inline">
             <label for="date">Date</label>
             <input type="date" id="date" name="date" required>
@@ -190,7 +190,7 @@
                 </span>
             </div>
             {% if slot.is_available %}
-            <form method="POST" action="{{ url_for('main.delete_slot', slot_id=slot.id) }}" style="display: inline;" onsubmit="return confirm('Delete this availability slot?');">
+            <form method="POST" action="{{ url_for('dashboard.delete_slot', slot_id=slot.id) }}" style="display: inline;" onsubmit="return confirm('Delete this availability slot?');">
                 <button type="submit" class="btn-delete-slot">🗑️</button>
             </form>
             {% endif %}

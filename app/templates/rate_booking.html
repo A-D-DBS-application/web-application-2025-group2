@@ -228,7 +228,7 @@
             <p style="margin-top: 1rem; font-style: italic;">"{{ existing_rating.review }}"</p>
             {% endif %}
         </div>
-        <a href="{{ url_for('main.client_dashboard') }}" class="back-link">← Back to Dashboard</a>
+        <a href="{{ url_for('dashboard.client_dashboard') }}" class="back-link">← Back to Dashboard</a>
         {% else %}
         <form method="POST">
             <div class="rating-section">
@@ -261,7 +261,7 @@
             <button type="submit" class="submit-btn">Submit Review</button>
         </form>
 
-        <a href="{{ url_for('main.client_dashboard') }}" class="back-link" style="display: block; text-align: center; margin-top: 1rem;">← Cancel</a>
+        <a href="{{ url_for('dashboard.client_dashboard') }}" class="back-link" style="display: block; text-align: center; margin-top: 1rem;">← Cancel</a>
         {% endif %}
     </div>
 </div>

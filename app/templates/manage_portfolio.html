@@ -233,7 +233,7 @@
 
         <div class="create-album-section">
             <h2>Create New Album</h2>
-            <form method="POST" action="{{ url_for('main.create_album') }}">
+            <form method="POST" action="{{ url_for('dashboard.create_album') }}">
                 <div class="form-group">
                     <label for="name">Album Name *</label>
                     <input type="text" id="name" name="name" placeholder="e.g., Weddings, Funerals, Corporate Events" required>
@@ -276,8 +276,8 @@
                         {% endif %}
                     </div>
                     <div class="album-actions">
-                        <a href="{{ url_for('main.upload_to_album', album_id=album.id) }}" class="btn btn-secondary">Upload Photos</a>
-                        <form method="POST" action="{{ url_for('main.delete_album', album_id=album.id) }}" style="display: inline;">
+                        <a href="{{ url_for('dashboard.upload_to_album', album_id=album.id) }}" class="btn btn-secondary">Upload Photos</a>
+                        <form method="POST" action="{{ url_for('dashboard.delete_album', album_id=album.id) }}" style="display: inline;">
                             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure? This will delete the album and all its photos.')">Delete Album</button>
                         </form>
                     </div>

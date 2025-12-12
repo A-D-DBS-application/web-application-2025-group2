@@ -92,7 +92,7 @@
                 📸
                 {% endif %}
                 <div class="photo-actions">
-                    <form method="POST" action="{{ url_for('main.delete_photo', photo_id=photo.photo_id) }}" style="display: inline;" onsubmit="return confirm('Delete this photo?');">
+                    <form method="POST" action="{{ url_for('dashboard.delete_photo', photo_id=photo.photo_id) }}" style="display: inline;" onsubmit="return confirm('Delete this photo?');">
                         <button type="submit" class="photo-btn btn-delete">🗑️</button>
                     </form>
                 </div>
@@ -103,7 +103,7 @@
     {% endif %}
 
     <div style="margin-top: 2rem; text-align: center;">
-        <a href="{{ url_for('main.photographer_dashboard') }}" class="btn btn-secondary">← Back to Bookings</a>
+        <a href="{{ url_for('dashboard.photographer_dashboard') }}" class="btn btn-secondary">← Back to Bookings</a>
     </div>
 </div>
 
