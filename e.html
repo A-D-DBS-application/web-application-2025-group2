@@ -61,30 +61,6 @@
     {% block extra_styles %}{% endblock %}
 </head>
 <body>
-    <button
-      id="darkmode-toggle"
-      class="darkmode-toggle-btn"
-      aria-label="Toggle dark mode"
-      type="button"
-    >🌙</button>
-    <script>
-      // Dark mode toggle logic
-      const btn = document.getElementById('darkmode-toggle');
-      function updateIcon() {
-        btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-      }
-      btn.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        updateIcon();
-        // Save preference
-        localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode'));
-      });
-      // On load: restore preference
-      if (localStorage.getItem('dark-mode') === 'true') {
-        document.body.classList.add('dark-mode');
-      }
-      updateIcon();
-    </script>
     <header>
         <div class="header-content">
             <a href="{{ url_for('main.index') }}" class="logo">
@@ -144,5 +120,30 @@
         </div>
     </footer>
     {% block extra_scripts %}{% endblock %}
+    <button
+      id="darkmode-toggle"
+      class="darkmode-toggle-btn"
+      aria-label="Toggle dark mode"
+      type="button"
+      style="z-index: 9999;"
+    >🌙</button>
+    <script>
+      // Dark mode toggle logic
+      const btn = document.getElementById('darkmode-toggle');
+      function updateIcon() {
+        btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      }
+      btn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        updateIcon();
+        // Save preference
+        localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode'));
+      });
+      // On load: restore preference
+      if (localStorage.getItem('dark-mode') === 'true') {
+        document.body.classList.add('dark-mode');
+      }
+      updateIcon();
+    </script>
 </body>
 </html>
