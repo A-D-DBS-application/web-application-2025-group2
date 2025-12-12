@@ -5,7 +5,7 @@
   z-index: 1000;
   background: transparent;
   border: none;
-  font-size: 2rem;
+  font-size: 3rem; /* Maak groter indien gewenst */
   cursor: pointer;
   transition: color 0.2s;
   color: #333;
