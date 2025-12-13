@@ -348,86 +348,51 @@ def delete_album(album_id):
 
 @dashboard_bp.route('/dashboard/photographer/upload-photos/<booking_id>', methods=['GET', 'POST'])
 def upload_photos(booking_id):
-    print(f"\n🔍 Route called - Method: {request.method}, Booking: {booking_id}")
-    
     if 'user_id' not in session:
-        print("❌ FAILED: No user_id in session")
         return redirect(url_for('main.login'))
-    
-    print(f"✅ User in session: {session['user_id']}")
     
     user = User.query.get(session['user_id'])
     if not user:
-        print("❌ FAILED: User not found in database")
         return redirect(url_for('main.login'))
     
-    print(f"✅ User found: {user.name}, Role: {user.role}")
-    
     if user.role != 'photographer':
-        print(f"❌ FAILED: User is not photographer (role: {user.role})")
         flash('Access denied.')
         return redirect(url_for('main.index'))
     
-    print(f"✅ User is photographer")
-    
     booking = Booking.query.get(booking_id)
     if not booking:
-        print(f"❌ FAILED: Booking {booking_id} not found")
         flash('Booking not found.')
         return redirect(url_for('dashboard.photographer_dashboard'))
-    
-    print(f"✅ Booking found: {booking.id}")
-    print(f"   Photographer ID on booking: {booking.photographer_id}")
-    print(f"   Current user ID: {user.id}")
     
     if booking.photographer_id != user.id:
-        print(f"❌ FAILED: Booking photographer ({booking.photographer_id}) != current user ({user.id})")
         flash('Booking not found.')
         return redirect(url_for('dashboard.photographer_dashboard'))
     
-    print(f"✅ Booking belongs to photographer")
-    
     if request.method == 'POST':
-        print("\n" + "="*70)
-        print("POST REQUEST - UPLOAD STARTING")
-        print("="*70)
-        
         files = request.files.getlist('photos')
-        print(f"Files received: {len(files)}")
         
         if not files or files[0].filename == '':
-            print("❌ FAILED: No files or empty filename")
             flash('No files selected.')
             return redirect(request.url)
         
-        print("✅ File validation passed")
-        
         try:
             supabase = get_supabase_client()
-            print(f"✅ Supabase client created")
             
             uploaded_count = 0
             for file in files:
                 if file and file.filename:
-                    print(f"\n--- Processing: {file.filename} ---")
-                    
                     file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
                     unique_filename = f"{uuid.uuid4()}.{file_ext}"
-                    print(f"  Unique filename: {unique_filename}")
                     
                     file_content = file.read()
-                    print(f"  File size: {len(file_content)} bytes")
                     
-                    print("  Uploading to Supabase...")
                     response = supabase.storage.from_('photos').upload(
                         path=unique_filename,
                         file=file_content,
                         file_options={"content-type": file.content_type}
                     )
-                    print(f"  ✅ Uploaded to Supabase: {response}")
                     
                     photo_url = supabase.storage.from_('photos').get_public_url(unique_filename)
-                    print(f"  ✅ Photo URL: {photo_url}")
                     
                     new_photo = Photo(
                         user_id=booking.client_id,
@@ -439,20 +404,15 @@ def upload_photos(booking_id):
                     )
                     
                     db.session.add(new_photo)
-                    print(f"  ✅ Added to DB session")
                     uploaded_count += 1
             
             db.session.commit()
-            print(f"\n✅ COMMIT SUCCESSFUL - {uploaded_count} photos uploaded to Supabase")
             
             flash(f'Successfully uploaded {uploaded_count} photo(s)!')
             return redirect(url_for('dashboard.upload_photos', booking_id=booking_id))
             
         except Exception as e:
             db.session.rollback()
-            print(f"\n❌ ERROR: {str(e)}")
-            import traceback
-            traceback.print_exc()
             flash(f'Error uploading photos: {str(e)}')
             return redirect(request.url)
     
