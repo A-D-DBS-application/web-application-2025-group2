@@ -162,6 +162,44 @@
     .view-profile-btn:hover {
         background: #5568d3;
     }
+
+    .section-alt {
+        background: #F8FAFC;
+    }
+
+    /* Dark Mode Overrides */
+    body.dark-mode .hero,
+    body.dark-mode .section {
+        background: #181818 !important;
+    }
+    
+    body.dark-mode .section-alt {
+        background: #1f1f1f !important;
+    }
+
+    body.dark-mode .hero-text h1,
+    body.dark-mode .section-title,
+    body.dark-mode .step-title,
+    body.dark-mode .photographer-name {
+        color: #f1f1f1;
+    }
+
+    body.dark-mode .hero-text p,
+    body.dark-mode .section-subtitle,
+    body.dark-mode .step-description,
+    body.dark-mode .photographer-bio {
+        color: #cbd5e1;
+    }
+
+    body.dark-mode .step-card,
+    body.dark-mode .photographer-card {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+
+    body.dark-mode .photographer-specialty {
+        color: #90caf9;
+    }
 </style>
 {% endblock %}
 
@@ -206,7 +244,7 @@
     </div>
 </div>
 
-<div class="section" style="background: #F8FAFC;">
+<div class="section section-alt">
     <div class="section-header">
         <h2 class="section-title">Featured Photographers</h2>
         <p class="section-subtitle">Discover talented professionals ready to capture your moments</p>
