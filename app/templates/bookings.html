@@ -97,7 +97,7 @@
         <div class="logo">De Kodak</div>
         <div class="nav-links">
             <a href="{{ url_for('main.index') }}">HOME</a>
-            <a href="{{ url_for('main.bookings') }}">BOOKINGS</a>
+            <a href="{{ url_for('bookings.bookings') }}">BOOKINGS</a>
             {% if session.get('user_id') %}
                 <form action="{{ url_for('main.logout') }}" method="POST" style="display:inline;">
                     <button type="submit" style="background:none;border:none;color:#333;font-weight:500;cursor:pointer;">LOGOUT</button>
@@ -124,8 +124,8 @@
                     <p style="font-size: 0.9em; color: #999;">Created: {{ booking.created_at.strftime('%B %d, %Y') }}</p>
                 </div>
                 <div class="booking-actions">
-                    <a href="{{ url_for('main.booking_detail', booking_id=booking.id) }}" class="btn btn-primary">View Details</a>
-                    <form action="{{ url_for('main.cancel_booking', booking_id=booking.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                    <a href="{{ url_for('bookings.booking_detail', booking_id=booking.id) }}" class="btn btn-primary">View Details</a>
+                    <form action="{{ url_for('dashboard.cancel_booking', booking_id=booking.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                         <button type="submit" class="btn btn-danger">Cancel</button>
                     </form>
                 </div>
@@ -136,7 +136,7 @@
                 <h2>No bookings yet</h2>
                 <p>{% if user.role == 'photographer' %}You don't have any client bookings yet.{% else %}You haven't made any bookings yet.{% endif %}</p>
                 {% if user.role != 'photographer' %}
-                    <a href="{{ url_for('main.book') }}" class="btn btn-primary" style="margin-top: 20px;">Book a Photographer</a>
+                    <a href="{{ url_for('bookings.book') }}" class="btn btn-primary" style="margin-top: 20px;">Book a Photographer</a>
                 {% endif %}
             </div>
         {% endif %}

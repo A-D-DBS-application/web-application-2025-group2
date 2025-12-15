@@ -201,7 +201,10 @@ def calculate_recency_score(photographer):
 
 def rank_photographers(event_type=None, desired_date=None, limit=None):
     """
-    Main function to rank all photographers based on multiple factors.
+    Main function to rank all photographers based on 3 key factors:
+    - Style match (40%): Portfolio relevance to event type
+    - Availability (30%): Has slots near desired date
+    - Performance (30%): Completion rate and ratings
     
     Args:
         event_type: String like 'wedding', 'portrait', etc. (optional)
@@ -218,18 +221,16 @@ def rank_photographers(event_type=None, desired_date=None, limit=None):
     ranked_photographers = []
     
     for photographer in photographers:
-        # Calculate individual scores
+        # Calculate individual scores (only 3 factors)
         style_score = calculate_style_match_score(photographer, event_type)
         availability_score = calculate_availability_score(photographer, desired_date)
         performance_score = calculate_performance_score(photographer)
-        recency_score = calculate_recency_score(photographer)
         
-        # Calculate weighted total score
+        # Calculate weighted total score (40% + 30% + 30% = 100%)
         total_score = (
             style_score * RANKING_WEIGHTS['style_match'] +
             availability_score * RANKING_WEIGHTS['availability'] +
-            performance_score * RANKING_WEIGHTS['performance'] +
-            recency_score * RANKING_WEIGHTS['recency']
+            performance_score * RANKING_WEIGHTS['performance']
         )
         
         # Score breakdown for debugging/display
@@ -237,7 +238,6 @@ def rank_photographers(event_type=None, desired_date=None, limit=None):
             'style_match': round(style_score, 1),
             'availability': round(availability_score, 1),
             'performance': round(performance_score, 1),
-            'recency': round(recency_score, 1),
             'total': round(total_score, 1)
         }
         

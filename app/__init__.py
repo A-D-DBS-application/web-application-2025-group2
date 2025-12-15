@@ -7,13 +7,10 @@ def create_app():
     app.config.from_object('app.config.Config')
     db.init_app(app)
 
-    from app.routes.main import main_bp
-    from app.routes.bookings import bookings_bp
-    from app.routes.dashboard import dashboard_bp
-
-    app.register_blueprint(main_bp)
-    app.register_blueprint(bookings_bp)
-    app.register_blueprint(dashboard_bp)
+    from app.routes import main, dashboard, bookings
+    app.register_blueprint(main)
+    app.register_blueprint(dashboard)
+    app.register_blueprint(bookings)
 
     with app.app_context():
         db.create_all()

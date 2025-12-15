@@ -4,64 +4,25 @@
 
 {% block extra_styles %}
 <style>
-    .hero {
-        background: #FFFFFF;
-        padding: 6rem 2rem;
-    }
-    .hero-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4rem;
-        align-items: center;
-        max-width: 1280px;
-        margin: 0 auto;
-    }
-    .hero-text h1 {
-        font-size: 3.5rem;
-        font-weight: 800;
-        color: #1E293B;
-        line-height: 1.2;
-        margin-bottom: 1.5rem;
-    }
-    .hero-text p {
-        font-size: 1.125rem;
-        color: #475569;
-        margin-bottom: 2.5rem;
-        line-height: 1.7;
-    }
-    .hero-buttons {
-        display: flex;
-        gap: 1rem;
-    }
-    .hero-image-container {
-        border-radius: 1.5rem; /* 24px */
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        height: 450px;
-    }
-    .hero-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    /* Responsive adjustments */
-    @media (max-width: 1024px) {
-        .hero-grid {
-            grid-template-columns: 1fr;
-            text-align: center;
-        }
-        .hero-text {
-            order: 2; /* Text comes after image on mobile */
-        }
-        .hero-image-container {
-            order: 1;
-            margin-bottom: 3rem;
-        }
-        .hero-buttons {
-            justify-content: center;
-        }
-    }
-
+    .hero { min-height: 700px; display: flex; align-items: center; overflow: hidden; background: #FFFFFF; }
+    .hero-grid { max-width: 1280px; margin: 0 auto; padding: 6rem 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+    .hero h1 { font-size: 4rem; font-weight: 800; color: #1E293B; margin-bottom: 2rem; line-height: 1.1; letter-spacing: -0.02em; }
+    .hero h2 { font-size: 1.5rem; font-weight: 600; color: #475569; margin-bottom: 1.5rem; line-height: 1.5; }
+    .hero p { font-size: 1.125rem; color: #64748B; margin-bottom: 3rem; line-height: 1.7; }
+    .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .dashboard-mockup { border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; background: #F8FAFC; padding: 2rem; }
+    .calendar-header { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #E2E8F0; }
+    .calendar-header-title { font-size: 1.125rem; font-weight: 600; color: #1E293B; margin-bottom: 0.5rem; }
+    .calendar-header-date { font-size: 0.875rem; color: #64748B; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-bottom: 1.5rem; }
+    .calendar-day-label { font-size: 0.75rem; font-weight: 600; color: #64748B; text-align: center; padding: 0.5rem; }
+    .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 500; background: #F8FAFC; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .calendar-day.booked { background: #2563EB; color: #FFF; }
+    .calendar-day:hover { background: #E0E7FF; }
+    .booking-list-title { font-size: 0.875rem; font-weight: 600; color: #1E293B; margin-bottom: 0.75rem; }
+    .booking-item { padding: 0.75rem; background: #F8FAFC; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid #E2E8F0; }
+    .booking-client { font-size: 0.875rem; font-weight: 600; color: #1E293B; margin-bottom: 0.25rem; }
+    .booking-details { font-size: 0.75rem; color: #64748B; display: flex; gap: 1rem; }
     .section { padding: 6rem 2rem; background: #FFFFFF; }
     .section-header { text-align: center; margin-bottom: 4rem; }
     .section-title { font-size: 2.5rem; font-weight: 700; color: #1E293B; margin-bottom: 1rem; }
@@ -162,120 +123,92 @@
     .view-profile-btn:hover {
         background: #5568d3;
     }
-
-    .section-alt {
-        background: #F8FAFC;
-    }
-
-    /* Dark Mode Overrides */
-    body.dark-mode .hero,
-    body.dark-mode .section {
-        background: #181818 !important;
-    }
-    
-    body.dark-mode .section-alt {
-        background: #1f1f1f !important;
-    }
-
-    body.dark-mode .hero-text h1,
-    body.dark-mode .section-title,
-    body.dark-mode .step-title,
-    body.dark-mode .photographer-name {
-        color: #f1f1f1;
-    }
-
-    body.dark-mode .hero-text p,
-    body.dark-mode .section-subtitle,
-    body.dark-mode .step-description,
-    body.dark-mode .photographer-bio {
-        color: #cbd5e1;
-    }
-
-    body.dark-mode .step-card,
-    body.dark-mode .photographer-card {
-        background: #2d2d2d;
-        border-color: #404040;
-    }
-
-    body.dark-mode .photographer-specialty {
-        color: #90caf9;
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="hero">
-    <div class="hero-grid">
-        <div class="hero-text">
-            <h1>Find Your Perfect Photographer</h1>
-            <p>Connect with professional photographers for your special moments.</p>
-            <div class="hero-buttons">
-                <a href="{{ url_for('main.photographers') }}" class="btn btn-primary">Browse Photographers</a>
-                <a href="{{ url_for('main.register') }}" class="btn btn-secondary">Get Started</a>
-            </div>
-        </div>
-        <div class="hero-image-container">
-            <img src="{{ url_for('static', filename='img/hero-camera.jpg') }}" alt="Camera on a tripod capturing a landscape" class="hero-image">
-        </div>
+<!-- Hero Section -->
+<section style="text-align: center; padding: 5rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; margin-bottom: 4rem;">
+    <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem;">Find Your Perfect Photographer</h1>
+    <p style="font-size: 1.25rem; margin-bottom: 2rem; opacity: 0.95;">Connect with professional photographers for your special moments</p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{{ url_for('main.photographers') }}" class="btn btn-primary" style="background: white; color: #667eea;">Browse Photographers</a>
+        {% if not session.get('user_id') %}
+            <a href="{{ url_for('main.register') }}" class="btn btn-secondary" style="border: 2px solid white; color: white; background: transparent;">Get Started</a>
+        {% endif %}
     </div>
 </section>
 
-<div class="section" id="how-it-works">
-    <div class="section-header">
-        <h2 class="section-title">How It Works</h2>
-        <p class="section-subtitle">Booking your next photography session is as easy as 1-2-3.</p>
-    </div>
-    <div class="steps-grid">
-        <div class="step-card">
-            <div class="step-number">1</div>
-            <h3 class="step-title">Discover & Compare</h3>
-            <p class="step-description">Browse through profiles of talented photographers. Compare their portfolios, specialties, and pricing to find the perfect match for your needs.</p>
-        </div>
-        <div class="step-card">
-            <div class="step-number">2</div>
-            <h3 class="step-title">Book & Schedule</h3>
-            <p class="step-description">Check their availability and book your preferred date and time directly through our secure platform. It’s quick, easy, and hassle-free.</p>
-        </div>
-        <div class="step-card">
-            <div class="step-number">3</div>
-            <h3 class="step-title">Capture Your Moments</h3>
-            <p class="step-description">Meet your photographer and enjoy your session! After the shoot, you'll receive your professionally edited photos through your personal client dashboard.</p>
-        </div>
-    </div>
-</div>
-
-<div class="section section-alt">
-    <div class="section-header">
-        <h2 class="section-title">Featured Photographers</h2>
-        <p class="section-subtitle">Discover talented professionals ready to capture your moments</p>
-    </div>
+<!-- Featured Photographers -->
+<section class="featured-photographers-section">
+    <h2 style="text-align: center; margin-bottom: 1rem;">Featured Photographers</h2>
+    <p style="text-align: center; color: #666; margin-bottom: 3rem;">Discover talented professionals ready to capture your moments</p>
+    
     <div class="photographer-grid">
         {% for photographer in photographers %}
-        <div class="photographer-card">
-            <div class="photographer-header">
-                <div class="photographer-avatar">
-                    <img src="https://i.pravatar.cc/80?u={{ photographer.id }}" alt="{{ photographer.name }}">
+        <div class="photographer-card-container">
+            <div class="photographer-card">
+                <!-- Profile Header with Avatar Circle -->
+                <div style="position: relative; margin-bottom: 2rem;">
+                    <div style="height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px 16px 0 0; margin: -2rem -2rem 0 -2rem;"></div>
+                    <div style="width: 80px; height: 80px; background: white; border-radius: 50%; position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-size: 2rem;">
+                        📷
+                    </div>
                 </div>
-            </div>
-            <div class="photographer-info">
-                <h3 class="photographer-name">{{ photographer.name }}</h3>
-                <p class="photographer-specialty">
-                    {% if photographer.specialties %}
-                        {{ photographer.specialties.split(',') | join(' & ') }}
-                    {% else %}
-                        Professional Photography
-                    {% endif %}
-                </p>
-                <div class="photographer-rating">
-                    <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
+
+                <div style="text-align: center; margin-top: 3rem;">
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem;">{{ photographer.name }}</h3>
+                    <p style="color: #64748B; font-size: 1rem; margin-bottom: 0.5rem;">Professional Photography</p>
+                    <p style="color: #64748B; font-size: 0.875rem; margin-bottom: 1.5rem;">Passionate photographer capturing moments that last forever.</p>
+                    
+                    <!-- Star Rating -->
+                    <div style="color: #FFC107; font-size: 1.25rem; margin-bottom: 1.5rem;">
+                        ⭐ ⭐ ⭐ ⭐ ⭐
+                    </div>
                 </div>
-                <p class="photographer-bio">{{ photographer.bio or 'Passionate photographer capturing moments that last a lifetime.' }}</p>
-            </div>
-            <div class="photographer-actions">
-                <a href="{{ url_for('main.photographer_profile', photographer_id=photographer.id) }}" class="btn btn-primary-outline">View Profile</a>
+
+                <!-- Price and Photos Count -->
+                <div style="display: flex; justify-content: space-around; margin-bottom: 1.5rem; padding: 1rem 0; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">
+                    <div style="text-align: center;">
+                        <p style="color: #2563EB; font-weight: 700; font-size: 1.5rem; margin-bottom: 0.25rem;">€150</p>
+                        <p style="color: #64748B; font-size: 0.75rem; text-transform: uppercase;">Per Hour</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <p style="color: #2563EB; font-weight: 700; font-size: 1.5rem; margin-bottom: 0.25rem;">{{ photographer_photos.get(photographer.id)|length or 5 }}</p>
+                        <p style="color: #64748B; font-size: 0.75rem; text-transform: uppercase;">Photos</p>
+                    </div>
+                </div>
+
+                <!-- Portfolio Photos -->
+                {% if photographer_photos.get(photographer.id) and photographer_photos[photographer.id]|length > 0 %}
+                    <div class="portfolio-grid">
+                        {% for photo in photographer_photos[photographer.id][:3] %}
+                            <div class="portfolio-item">
+                                <img src="{{ photo.image_url }}" alt="{{ photo.title or 'Portfolio photo' }}" loading="lazy">
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="portfolio-grid">
+                        <div class="no-photos">📷</div>
+                        <div class="no-photos">📷</div>
+                        <div class="no-photos">📷</div>
+                    </div>
+                {% endif %}
+
+                <a href="{{ url_for('main.photographer_profile', photographer_id=photographer.id) }}" class="view-profile-btn">
+                    View Profile & Book
+                </a>
             </div>
         </div>
         {% endfor %}
     </div>
-</div>
+
+    {% if not photographers %}
+    <div style="text-align: center; padding: 4rem; color: #94A3B8;">
+        <h3>No photographers available yet</h3>
+        <p>Check back soon!</p>
+    </div>
+    {% endif %}
+</section>
 {% endblock %}

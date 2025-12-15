@@ -30,11 +30,9 @@ ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 # Ranking algorithm weights
 RANKING_WEIGHTS = {
-    'style_match': 0.30,      # Portfolio matches event type
-    'availability': 0.25,      # Has slots near desired date
-    'performance': 0.20,       # Completion rate and ratings
-    'price_match': 0.15,       # Within budget (future)
-    'recency': 0.10           # Recently active
+    'style_match': 0.40,      # Portfolio matches event type
+    'availability': 0.30,      # Has slots near desired date
+    'performance': 0.30,       # Completion rate and ratings
 }
 
 # Event types for bookings
