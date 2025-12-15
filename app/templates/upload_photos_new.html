@@ -3,7 +3,35 @@
 {% block title %}Upload Photos - Culex{% endblock %}
 
 {% block extra_styles %}
-
+<style>
+    .upload-header { background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); padding: 3rem 2rem; color: #FFF; }
+    .upload-container { max-width: 1280px; margin: 0 auto; }
+    .upload-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .upload-subtitle { opacity: 0.95; font-size: 1.0625rem; }
+    .content-section { max-width: 1280px; margin: 2rem auto; padding: 0 2rem; }
+    .booking-info-card { background: #F8FAFC; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; border: 1px solid #E2E8F0; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .info-item { }
+    .info-label { font-size: 0.875rem; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .info-value { font-size: 1.125rem; font-weight: 600; color: #1E293B; }
+    .upload-section { background: #FFF; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; border: 2px dashed #E2E8F0; }
+    .upload-area { text-align: center; padding: 3rem 2rem; cursor: pointer; transition: all 0.3s; }
+    .upload-area:hover { background: #F8FAFC; border-color: #2563EB; }
+    .upload-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .upload-text { font-size: 1.125rem; font-weight: 600; color: #1E293B; margin-bottom: 0.5rem; }
+    .upload-hint { color: #64748B; font-size: 0.875rem; }
+    .file-input { display: none; }
+    .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .photo-card { position: relative; aspect-ratio: 1; background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%); border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+    .photo-card img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.5rem; }
+    .photo-btn { padding: 0.5rem; border-radius: 8px; background: rgba(255,255,255,0.9); border: none; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+    .photo-btn:hover { background: #FFF; transform: scale(1.1); }
+    .btn-delete { color: #DC2626; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: #1E293B; }
+    .photo-count { color: #64748B; font-size: 0.875rem; }
+</style>
 {% endblock %}
 
 {% block content %}
