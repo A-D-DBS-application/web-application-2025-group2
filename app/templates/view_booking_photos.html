@@ -3,30 +3,7 @@
 {% block title %}My Photos - Culex{% endblock %}
 
 {% block extra_styles %}
-<style>
-    .photos-header { background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); padding: 3rem 2rem; color: #FFF; }
-    .photos-container { max-width: 1280px; margin: 0 auto; }
-    .photos-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .photos-subtitle { opacity: 0.95; font-size: 1.0625rem; }
-    .content-section { max-width: 1280px; margin: 2rem auto; padding: 0 2rem; }
-    .booking-info-card { background: #F8FAFC; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; border: 1px solid #E2E8F0; }
-    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-    .info-label { font-size: 0.875rem; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .info-value { font-size: 1.125rem; font-weight: 600; color: #1E293B; }
-    .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
-    .photo-card { position: relative; aspect-ratio: 1; background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%); border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 4rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .photo-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-    .photo-card img { width: 100%; height: 100%; object-fit: cover; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .section-title { font-size: 1.5rem; font-weight: 700; color: #1E293B; }
-    .photo-count { color: #64748B; font-size: 0.875rem; }
-    .download-all-btn { background: #2563EB; color: #FFF; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .download-all-btn:hover { background: #1E40AF; }
-    .empty-state { text-align: center; padding: 4rem 2rem; }
-    .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; }
-    .empty-title { font-size: 1.5rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem; }
-    .empty-text { color: #64748B; }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_booking_photos.css') }}">
 {% endblock %}
 
 {% block content %}

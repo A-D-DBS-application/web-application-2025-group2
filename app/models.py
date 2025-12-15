@@ -22,14 +22,6 @@ class User(db.Model):
     availability_slots = db.relationship('PhotographerAvailability', backref='photographer', lazy='dynamic')
 
 
-class Category(db.Model):
-    __tablename__ = 'categories'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    description = db.Column(db.Text)
-
-
 class Booking(db.Model):
     __tablename__ = 'bookings'
     
@@ -53,7 +45,6 @@ class Photo(db.Model):
     # Match the actual database column names
     photo_id = db.Column('photo_id', db.Integer, primary_key=True)  # Primary key is 'photo_id'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     image_url = db.Column(db.Text, nullable=False)
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     photographer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -81,13 +72,6 @@ class Album(db.Model):
     photographer = db.relationship('User', backref=db.backref('albums', lazy=True))
 
 
-class Tag(db.Model):
-    __tablename__ = 'tags'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-
-
 class PhotographerAvailability(db.Model):
     __tablename__ = 'photographer_availability'
     
@@ -98,24 +82,6 @@ class PhotographerAvailability(db.Model):
     end_time = db.Column(db.String(10), nullable=False)
     is_available = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-class Rating(db.Model):
-    __tablename__ = 'ratings'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    booking_id = db.Column(UUID(as_uuid=True), db.ForeignKey('bookings.id'), nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    photographer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)
-    review = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    booking = db.relationship('Booking', backref=db.backref('rating', uselist=False))
-    client = db.relationship('User', foreign_keys=[client_id], backref='given_ratings')
-    photographer = db.relationship('User', foreign_keys=[photographer_id], backref='received_ratings')
-    
-    # Note: 'photographer' backref is defined in User.availability_slots relationship
-
 
 class Rating(db.Model):
     __tablename__ = 'rating'

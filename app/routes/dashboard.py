@@ -399,8 +399,7 @@ def upload_photos(booking_id):
                         photographer_id=user.id,
                         booking_id=booking.id,
                         image_url=photo_url,
-                        title=file.filename,
-                        category_id=None
+                        title=file.filename
                     )
                     
                     db.session.add(new_photo)
