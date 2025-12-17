@@ -1,0 +1,408 @@
+/* ==================================
+   RESPONSIVE DESIGN - MEDIA QUERIES
+   ================================== */
+
+/* Tablets & Small Laptops (max 1024px) */
+@media (max-width: 1024px) {
+    /* Header & Navigation */
+    .header-content {
+        padding: 1rem;
+    }
+    
+    nav {
+        gap: 1rem;
+    }
+    
+    nav a {
+        font-size: 0.875rem;
+        padding: 0.4rem 0;
+    }
+    
+    .btn {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Container */
+    .container {
+        padding: 0 1.5rem;
+    }
+    
+    /* Grid layouts */
+    .photographers-grid,
+    .photographer-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+/* Tablets Portrait & Large Phones (max 768px) */
+@media (max-width: 768px) {
+    /* Header */
+    .header-content {
+        flex-wrap: wrap;
+        padding: 0.75rem 1rem;
+    }
+    
+    .logo {
+        gap: 0.5rem;
+    }
+    
+    .logo-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+    }
+    
+    .logo-text {
+        font-size: 1.25rem;
+    }
+    
+    /* Navigation - Always visible, responsive layout */
+    nav {
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        justify-content: center;
+    }
+    
+    nav a {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    nav .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    nav span {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.75rem;
+    }
+    
+    /* Hero Section */
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+    }
+    
+    .hero-text h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-text p {
+        font-size: 1rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .hero-buttons .btn {
+        width: 100%;
+    }
+    
+    .hero-image-container {
+        height: 300px;
+    }
+    
+    /* Grids */
+    .photographers-grid,
+    .photographer-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .steps-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Booking Card */
+    .booking-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .booking-left {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .booking-right {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .booking-details {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .booking-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        width: 100%;
+    }
+    
+    /* Footer */
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        text-align: center;
+    }
+    
+    /* Forms */
+    .login-container,
+    .register-container {
+        padding: 2rem 1rem;
+    }
+    
+    .login-box,
+    .register-box {
+        padding: 2rem 1.5rem;
+    }
+    
+    /* Portfolio */
+    .portfolio-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .photo-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    /* Calendar */
+    .calendar-day {
+        min-height: 80px;
+        font-size: 0.75rem;
+    }
+    
+    /* Tables */
+    .dashboard-table {
+        font-size: 0.875rem;
+    }
+    
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+/* Mobile Phones (max 480px) */
+@media (max-width: 480px) {
+    /* Typography */
+    .hero-text h1,
+    .section-title {
+        font-size: 1.75rem;
+    }
+    
+    .bookings-title,
+    .portfolio-title {
+        font-size: 2rem;
+    }
+    
+    /* Header */
+    .header-content {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+    }
+    
+    .logo-text {
+        font-size: 1.125rem;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Hero */
+    .hero {
+        padding: 3rem 1rem;
+    }
+    
+    .hero-text h1 {
+        font-size: 1.75rem;
+    }
+    
+    .hero-image-container {
+        height: 250px;
+        border-radius: 1rem;
+    }
+    
+    /* Sections */
+    .section {
+        padding: 3rem 1rem;
+    }
+    
+    /* Cards */
+    .photographer-card,
+    .booking-card,
+    .step-card {
+        padding: 1.25rem;
+    }
+    
+    .booking-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    /* Portfolio & Photo Grids */
+    .portfolio-grid,
+    .photo-grid,
+    .photographer-photos,
+    .photographer-gallery {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    /* Forms */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .login-title,
+    .register-title {
+        font-size: 1.5rem;
+    }
+    
+    /* View Tabs */
+    .view-tabs {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .view-tab {
+        width: 100%;
+    }
+    
+    /* Filter Tabs */
+    .filter-tabs {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    /* Calendar */
+    .calendar-grid {
+        font-size: 0.75rem;
+    }
+    
+    .calendar-day {
+        min-height: 60px;
+        padding: 0.25rem;
+    }
+    
+    .calendar-day-number {
+        font-size: 0.75rem;
+    }
+    
+    /* Photographer Stats */
+    .photographer-meta,
+    .photographer-stats {
+        flex-wrap: wrap;
+    }
+    
+    .meta-value,
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    /* Footer */
+    .footer-grid {
+        padding: 0 1rem;
+    }
+    
+    .footer-bottom {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    /* Modal & Overlay adjustments */
+    .rate-container,
+    .upload-section {
+        padding: 1.5rem 1rem;
+    }
+    
+    .rate-card {
+        padding: 1.5rem;
+    }
+    
+    /* Spacing */
+    .container,
+    .bookings-container {
+        padding: 0 1rem;
+    }
+}
+
+/* Very Small Devices (max 360px) */
+@media (max-width: 360px) {
+    .hero-text h1 {
+        font-size: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+    
+    .photographer-card,
+    .booking-card {
+        padding: 1rem;
+    }
+}
+
+/* Landscape Phones */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hero {
+        padding: 2rem 1rem;
+    }
+    
+    .hero-image-container {
+        height: 200px;
+    }
+    
+    nav {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+}
+
+/* Print Styles */
+@media print {
+    header,
+    footer,
+    nav,
+    .btn,
+    .darkmode-toggle-btn {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}

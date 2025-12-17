@@ -61,15 +61,18 @@
                     <div class="photo-count">📸 {{ booking.photo_count }} photos</div>
                     {% endif %}
                     <div class="booking-actions">
+                        <a href="{{ url_for('dashboard.export_booking_ical', booking_id=booking.id) }}" class="action-btn" style="background: #10B981; color: white;">
+                            📅 Add to Calendar
+                        </a>
                         {% if booking.photo_count > 0 %}
                         <a href="{{ url_for('dashboard.view_booking_photos', booking_id=booking.id) }}" class="action-btn action-view">
                             👁️ View Photos
                         </a>
                         {% endif %}
                         {% if booking.status not in ['cancelled', 'completed'] %}
-                        <button class="action-btn action-reschedule">
+                        <a href="{{ url_for('dashboard.reschedule_booking', booking_id=booking.id) }}" class="action-btn action-reschedule">
                             ✏️ Reschedule
-                        </button>
+                        </a>
                         <form method="POST" action="{{ url_for('dashboard.cancel_booking', booking_id=booking.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                             <button type="submit" class="action-btn action-cancel">
                                 ✖️ Cancel

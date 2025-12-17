@@ -1,12 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, Response
 from app import db
 from app.models import User, Booking, Photo, PhotographerAvailability, Album, Rating
 from app.constants import BOOKING_STATUS_COMPLETED
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 from werkzeug.utils import secure_filename
 from app.utils.decorators import login_required, photographer_required
 from app.utils.helpers import get_current_user, get_supabase_client
+from app.utils.dashboard_helpers import get_booking_with_security_check, enrich_bookings_with_details, free_availability_slot
+from icalendar import Calendar, Event
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -39,71 +41,42 @@ def add_availability():
 @photographer_required
 def photographer_dashboard():
     user = get_current_user()
-    
-    # Get bookings from clients (where this user is the photographer)
-    bookings = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
-    
-    # Attach client objects and photo counts to bookings
-    for booking in bookings:
-        booking.client = User.query.get(booking.client_id)
-        booking.photo_count = Photo.query.filter_by(booking_id=booking.id).count()
-    
-    return render_template('photographer_dashboard_new.html',
-                         user=user,
-                         bookings=bookings)
+    bookings = Booking.query.filter_by(photographer_id=user.id).order_by(
+        db.case((Booking.status == 'pending', 1), (Booking.status == 'confirmed', 2), 
+                (Booking.status == 'completed', 3), (Booking.status == 'cancelled', 4), else_=5),
+        Booking.booking_date_and_time.desc()
+    ).all()
+    enrich_bookings_with_details(bookings, for_photographer=True)
+    return render_template('photographer_dashboard_new.html', user=user, bookings=bookings)
 
 @dashboard_bp.route('/dashboard/photographer/complete-booking/<booking_id>', methods=['POST'])
+@photographer_required
 def complete_booking(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied.')
-        return redirect(url_for('main.index'))
-    
-    booking = Booking.query.get_or_404(booking_id)
-    
-    # Security check: only the photographer can complete their booking
-    if booking.photographer_id != user.id:
-        flash('You can only complete your own bookings.')
-        return redirect(url_for('dashboard.photographer_dashboard'))
+    user = get_current_user()
+    booking, error = get_booking_with_security_check(booking_id, user, 'photographer')
+    if error:
+        return error
     
     booking.status = 'completed'
     db.session.commit()
-    
     flash('Booking marked as completed.')
     return redirect(url_for('dashboard.photographer_dashboard'))
 
 @dashboard_bp.route('/photographer/add-availability', methods=['POST'])
+@photographer_required
 def add_availability_slot():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user = get_current_user()
+    date, start_time, end_time = request.form.get('date'), request.form.get('start_time'), request.form.get('end_time')
     
-    user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied. Photographers only.')
-        return redirect(url_for('main.index'))
-    
-    date = request.form.get('date')
-    start_time = request.form.get('start_time')
-    end_time = request.form.get('end_time')
-    
-    if not date or not start_time or not end_time:
+    if not all([date, start_time, end_time]):
         flash('All fields are required.')
         return redirect(url_for('dashboard.photographer_dashboard'))
     
-    # Create availability slot
-    new_slot = PhotographerAvailability(
-        photographer_id=user.id,
-        available_date=datetime.strptime(date, '%Y-%m-%d').date(),
-        start_time=start_time,
-        end_time=end_time,
-        is_available=True
-    )
-    db.session.add(new_slot)
+    db.session.add(PhotographerAvailability(
+        photographer_id=user.id, available_date=datetime.strptime(date, '%Y-%m-%d').date(),
+        start_time=start_time, end_time=end_time, is_available=True
+    ))
     db.session.commit()
-    
     flash('Availability slot added successfully!')
     return redirect(url_for('dashboard.photographer_dashboard'))
 
@@ -175,51 +148,29 @@ def client_dashboard():
                          photos_by_photographer=photos_by_photographer)
 
 @dashboard_bp.route('/portfolio/manage')
+@photographer_required
 def manage_portfolio():
-    """Photographer's portfolio management interface"""
-    if 'user_id' not in session:
-        flash('Please login to access this page', 'danger')
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if user.role != 'photographer':
-        flash('Only photographers can manage portfolios', 'danger')
-        return redirect(url_for('main.index'))
-    
+    user = get_current_user()
     albums = Album.query.filter_by(photographer_id=user.id).order_by(Album.created_at.desc()).all()
     return render_template('manage_portfolio.html', user=user, albums=albums)
 
 
 @dashboard_bp.route('/portfolio/album/create', methods=['POST'])
+@photographer_required
 def create_album():
-    """Create a new album/category"""
-    if 'user_id' not in session:
-        flash('Please login first', 'danger')
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if user.role != 'photographer':
-        flash('Only photographers can create albums', 'danger')
-        return redirect(url_for('main.index'))
-    
+    user = get_current_user()
     name = request.form.get('name', '').strip()
-    description = request.form.get('description', '').strip()
     
     if not name:
         flash('Album name is required', 'danger')
         return redirect(url_for('dashboard.manage_portfolio'))
     
-    new_album = Album(
-        photographer_id=user.id,
-        name=name,
-        description=description if description else None
-    )
-    
+    new_album = Album(photographer_id=user.id, name=name, 
+                     description=request.form.get('description', '').strip() or None)
     db.session.add(new_album)
     db.session.commit()
     
     flash(f'Album "{name}" created! Now add your photos.', 'success')
-    # Redirect directly to upload page for the new album
     return redirect(url_for('dashboard.upload_to_album', album_id=new_album.id))
 
 
@@ -608,4 +559,221 @@ def delete_booking(booking_id):
     if user.role == 'photographer':
         return redirect(url_for('dashboard.photographer_dashboard'))
     return redirect(url_for('dashboard.client_dashboard'))
+
+@dashboard_bp.route('/booking/reschedule/<booking_id>', methods=['GET', 'POST'])
+@login_required
+def reschedule_booking(booking_id):
+    user = get_current_user()
+    
+    # Get the booking
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security check: only the client can reschedule their booking
+    if booking.client_id != user.id:
+        flash('You can only reschedule your own bookings.')
+        return redirect(url_for('dashboard.client_dashboard'))
+    
+    # Get the photographer
+    photographer = User.query.get(booking.photographer_id)
+    
+    if request.method == 'POST':
+        new_date_str = request.form.get('new_date')
+        
+        if not new_date_str:
+            flash('Please select a new date.')
+            return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
+        
+        try:
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d')
+            
+            # Check if the new date is available
+            availability = PhotographerAvailability.query.filter_by(
+                photographer_id=booking.photographer_id,
+                available_date=new_date.date(),
+                is_available=True
+            ).first()
+            
+            if not availability:
+                flash('The selected date is not available. Please choose another date.')
+                return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
+            
+            # Free up the old availability slot
+            if booking.booking_date_and_time:
+                old_slot = PhotographerAvailability.query.filter_by(
+                    photographer_id=booking.photographer_id,
+                    available_date=booking.booking_date_and_time.date(),
+                    is_available=False
+                ).first()
+                
+                if old_slot:
+                    old_slot.is_available = True
+            
+            # Book the new slot
+            availability.is_available = False
+            
+            # Update booking date
+            booking.booking_date_and_time = new_date
+            booking.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            flash('Booking rescheduled successfully!')
+            return redirect(url_for('dashboard.client_dashboard'))
+            
+        except ValueError:
+            flash('Invalid date format.')
+            return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
+    
+    # GET request - show available dates
+    # Get photographer's available dates
+    available_dates = PhotographerAvailability.query.filter_by(
+        photographer_id=booking.photographer_id,
+        is_available=True
+    ).order_by(PhotographerAvailability.available_date).all()
+    
+    return render_template('reschedule_booking.html',
+                         booking=booking,
+                         photographer=photographer,
+                         available_dates=available_dates)
+
+@dashboard_bp.route('/booking/<booking_id>/export.ics')
+@login_required
+def export_booking_ical(booking_id):
+    user = get_current_user()
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security check: only client or photographer can export
+    if booking.client_id != user.id and booking.photographer_id != user.id:
+        flash('Access denied.')
+        return redirect(url_for('main.index'))
+    
+    # Get photographer and client details
+    photographer = User.query.get(booking.photographer_id)
+    client = User.query.get(booking.client_id)
+    
+    # Create calendar
+    cal = Calendar()
+    cal.add('prodid', '-//Culex Photography Booking//culex.com//')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
+    cal.add('x-wr-calname', 'Culex Photography Bookings')
+    cal.add('x-wr-timezone', 'Europe/Brussels')
+    
+    # Create event
+    event = Event()
+    event.add('summary', f'📷 {booking.type} Photography Session')
+    event.add('dtstart', booking.booking_date_and_time)
+    event.add('dtend', booking.booking_date_and_time + timedelta(hours=2))
+    event.add('dtstamp', datetime.utcnow())
+    event.add('uid', f'booking-{booking.id}@culex.com')
+    
+    # Add description with details
+    description = f"""Photography Session Details:
+    
+Type: {booking.type}
+Photographer: {photographer.name} ({photographer.email})
+Client: {client.name} ({client.email})
+Status: {booking.status.capitalize()}
+
+{booking.description if booking.description else ''}
+
+Booked via Culex Photography Platform
+"""
+    event.add('description', description)
+    
+    # Add location if available
+    event.add('location', 'To be determined')
+    
+    # Add organizer and attendee
+    event.add('organizer', f'mailto:{photographer.email}')
+    event.add('attendee', f'mailto:{client.email}')
+    
+    # Add alarm (reminder 24 hours before)
+    from icalendar import Alarm
+    alarm = Alarm()
+    alarm.add('action', 'DISPLAY')
+    alarm.add('description', f'Photography session reminder: {booking.type}')
+    alarm.add('trigger', timedelta(hours=-24))
+    event.add_component(alarm)
+    
+    # Add 1 hour reminder
+    alarm2 = Alarm()
+    alarm2.add('action', 'DISPLAY')
+    alarm2.add('description', f'Photography session starts in 1 hour')
+    alarm2.add('trigger', timedelta(hours=-1))
+    event.add_component(alarm2)
+    
+    cal.add_component(event)
+    
+    # Return as downloadable file
+    return Response(
+        cal.to_ical(),
+        mimetype='text/calendar',
+        headers={
+            'Content-Disposition': f'attachment; filename=photography-booking-{booking.id}.ics'
+        }
+    )
+
+@dashboard_bp.route('/photographer/export-calendar.ics')
+@photographer_required
+def export_photographer_calendar():
+    user = get_current_user()
+    
+    # Get all upcoming bookings for this photographer
+    upcoming_bookings = Booking.query.filter(
+        Booking.photographer_id == user.id,
+        Booking.booking_date_and_time >= datetime.now(),
+        Booking.status.in_(['pending', 'confirmed'])
+    ).order_by(Booking.booking_date_and_time).all()
+    
+    # Create calendar
+    cal = Calendar()
+    cal.add('prodid', '-//Culex Photography Bookings//culex.com//')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
+    cal.add('x-wr-calname', f'{user.name} - Photography Bookings')
+    cal.add('x-wr-timezone', 'Europe/Brussels')
+    
+    # Add each booking as an event
+    for booking in upcoming_bookings:
+        client = User.query.get(booking.client_id)
+        
+        event = Event()
+        event.add('summary', f'📷 {booking.type} - {client.name}')
+        event.add('dtstart', booking.booking_date_and_time)
+        event.add('dtend', booking.booking_date_and_time + timedelta(hours=2))
+        event.add('dtstamp', datetime.utcnow())
+        event.add('uid', f'booking-{booking.id}@culex.com')
+        
+        description = f"""Client: {client.name}
+Email: {client.email}
+Type: {booking.type}
+Status: {booking.status.capitalize()}
+
+{booking.description if booking.description else ''}
+"""
+        event.add('description', description)
+        event.add('location', 'To be determined')
+        event.add('organizer', f'mailto:{user.email}')
+        event.add('attendee', f'mailto:{client.email}')
+        
+        # Add reminder
+        from icalendar import Alarm
+        alarm = Alarm()
+        alarm.add('action', 'DISPLAY')
+        alarm.add('description', f'Session with {client.name}')
+        alarm.add('trigger', timedelta(hours=-24))
+        event.add_component(alarm)
+        
+        cal.add_component(event)
+    
+    return Response(
+        cal.to_ical(),
+        mimetype='text/calendar',
+        headers={
+            'Content-Disposition': f'attachment; filename={user.username}-bookings.ics'
+        }
+    )
 
