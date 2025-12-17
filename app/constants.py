@@ -1,5 +1,8 @@
+
 """
 Application constants for the photography booking platform.
+
+APP_NAME = "Culex"
 """
 
 # Booking statuses
