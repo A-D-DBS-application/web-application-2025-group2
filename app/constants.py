@@ -1,9 +1,9 @@
 
 """
 Application constants for the photography booking platform.
-
-APP_NAME = "Culex"
 """
+APP_NAME = "Culex"
+
 
 # Booking statuses
 BOOKING_STATUS_PENDING = 'pending'

@@ -2,12 +2,13 @@
 from flask import Flask
 from app.models import db  # Import db from models
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object('app.config.Config')
     db.init_app(app)
 
-        from app.constants import APP_NAME
+    from app.constants import APP_NAME
     from app.routes import main, dashboard, bookings
     app.register_blueprint(main)
     app.register_blueprint(dashboard)
