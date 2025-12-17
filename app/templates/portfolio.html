@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ photographer.name }}'s Portfolio - Culex{% endblock %}
+{% block title %}{{ photographer.name }}'s Portfolio - {{ app_name }}{% endblock %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/portfolio.css') }}">

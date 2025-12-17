@@ -15,4 +15,8 @@ def create_app():
     with app.app_context():
         db.create_all()
 
+    @app.context_processor
+    def inject_app_name():
+        return dict(app_name="Culex")
+
     return app

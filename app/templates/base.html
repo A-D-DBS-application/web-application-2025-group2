@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Culex - Photography Booking{% endblock %}</title>
+    <title>{% block title %}{{ app_name }} - Photography Booking{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     {% block extra_styles %}{% endblock %}
@@ -13,7 +13,7 @@
         <div class="header-content">
             <a href="{{ url_for('main.index') }}" class="logo">
                 <div class="logo-icon">📷</div>
-                <span class="logo-text">Culex</span>
+                <span class="logo-text">{{ app_name }}</span>
             </a>
             <nav>
                 <a href="{{ url_for('main.index') }}" {% if request.endpoint == 'main.index' %}class="active"{% endif %}>Home</a>
@@ -42,7 +42,7 @@
     <footer>
         <div class="footer-grid">
             <div class="footer-section">
-                <h3>Culex</h3>
+                <h3>{{ app_name }}</h3>
                 <p style="font-size: 0.875rem;">Professional photography booking made simple.</p>
             </div>
             <div class="footer-section">
@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 Culex. All rights reserved.</p>
+            <p>&copy; 2025 {{ app_name }}. All rights reserved.</p>
         </div>
     </footer>
     {% block extra_scripts %}{% endblock %}
