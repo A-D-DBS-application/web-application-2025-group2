@@ -20,61 +20,29 @@ from app.constants import (
 
 
 def calculate_style_match_score(photographer, event_type):
-    """
-    Calculate how well photographer's portfolio matches the event type.
-    
-    Args:
-        photographer: User object with role='photographer'
-        event_type: String like 'wedding', 'portrait', 'corporate', etc.
-    
-    Returns:
-        float: Score from 0-100
-    """
+    """Calculate portfolio match score (0-100)"""
     if not event_type:
-        return 50  # Neutral score if no event type specified
+        return 50
     
-    # Get all albums for this photographer
     albums = Album.query.filter_by(photographer_id=photographer.id).all()
-    
     if not albums:
-        return 0  # No portfolio = 0 score
+        return 0
     
-    # Check if any album name/description contains event type keywords
-    event_keywords = event_type.lower().split()
-    matching_albums = 0
-    total_photos = 0
-    
-    for album in albums:
-        album_text = f"{album.name} {album.description or ''}".lower()
-        if any(keyword in album_text for keyword in event_keywords):
-            matching_albums += 1
-            # Count photos in matching albums
-            total_photos += len(album.photos)
+    keywords = event_type.lower().split()
+    matching_albums = sum(1 for a in albums if any(k in f"{a.name} {a.description or ''}".lower() for k in keywords))
     
     if matching_albums == 0:
-        return 20  # Has portfolio but no matching albums
+        return 20
     
-    # Score based on both number of matching albums and their size
     match_ratio = matching_albums / len(albums)
-    photo_bonus = min(total_photos * 2, 30)  # Up to 30 bonus points for photos
+    photo_bonus = min(sum(len(a.photos) for a in albums if any(k in f"{a.name} {a.description or ''}".lower() for k in keywords)) * 2, 30)
     
     return min(match_ratio * 70 + photo_bonus, 100)
 
 
 def calculate_availability_score(photographer, desired_date=None):
-    """
-    Calculate photographer's availability score.
-    
-    Args:
-        photographer: User object
-        desired_date: datetime.date object or None
-    
-    Returns:
-        float: Score from 0-100
-    """
+    """Calculate availability score (0-100)"""
     today = datetime.now().date()
-    
-    # Get all future available slots
     future_slots = PhotographerAvailability.query.filter(
         PhotographerAvailability.photographer_id == photographer.id,
         PhotographerAvailability.available_date >= today,
@@ -82,68 +50,97 @@ def calculate_availability_score(photographer, desired_date=None):
     ).count()
     
     if future_slots == 0:
-        return 0  # No availability
+        return 0
     
-    base_score = min(future_slots * 10, 60)  # Up to 60 points for having slots
+    base_score = min(future_slots * 10, 60)
     
-    # Bonus if has availability near desired date
     if desired_date:
-        date_range_start = desired_date - timedelta(days=7)
-        date_range_end = desired_date + timedelta(days=7)
-        
         nearby_slots = PhotographerAvailability.query.filter(
             PhotographerAvailability.photographer_id == photographer.id,
-            PhotographerAvailability.available_date >= date_range_start,
-            PhotographerAvailability.available_date <= date_range_end,
+            PhotographerAvailability.available_date.between(desired_date - timedelta(days=7), desired_date + timedelta(days=7)),
             PhotographerAvailability.is_available == True
         ).count()
         
         if nearby_slots > 0:
-            base_score += 40  # Big bonus for availability near desired date
+            base_score += 40
     
     return min(base_score, 100)
 
 
 def calculate_performance_score(photographer):
-    """
-    Calculate photographer's performance score based on bookings and ratings.
-    
-    Args:
-        photographer: User object
-    
-    Returns:
-        float: Score from 0-100
-    """
-    # Get all bookings for this photographer
+    """Calculate performance score (0-100)"""
     total_bookings = Booking.query.filter_by(photographer_id=photographer.id).count()
-    
     if total_bookings == 0:
-        return 50  # New photographer, neutral score
+        return 50
     
-    # Calculate completion rate
-    completed_bookings = Booking.query.filter_by(
-        photographer_id=photographer.id,
-        status=BOOKING_STATUS_COMPLETED
-    ).count()
+    completed = Booking.query.filter_by(photographer_id=photographer.id, status=BOOKING_STATUS_COMPLETED).count()
+    avg_rating = db.session.query(func.avg(Rating.rating)).filter(Rating.photographer_id == photographer.id).scalar()
     
-    completion_rate = completed_bookings / total_bookings if total_bookings > 0 else 0
-    
-    # Calculate average rating
-    avg_rating_result = db.session.query(func.avg(Rating.rating)).filter(
-        Rating.photographer_id == photographer.id
-    ).scalar()
-    
-    avg_rating = float(avg_rating_result) if avg_rating_result else None
-    
-    # Build score
-    completion_score = completion_rate * 50  # Up to 50 points
-    
-    if avg_rating:
-        rating_score = (avg_rating / 5.0) * 50  # Up to 50 points (5 stars = 50)
-    else:
-        rating_score = 25  # Neutral if no ratings yet
+    completion_score = (completed / total_bookings) * 50
+    rating_score = (float(avg_rating) / 5.0 * 50) if avg_rating else 25
     
     return min(completion_score + rating_score, 100)
+
+
+def calculate_client_history_bonus(photographer, client_id):
+    """Calculate client history bonus (0-30)"""
+    if not client_id:
+        return 0
+    
+    previous_bookings = Booking.query.filter_by(
+        client_id=client_id, photographer_id=photographer.id, status=BOOKING_STATUS_COMPLETED
+    ).all()
+    
+    if not previous_bookings:
+        return 0
+    
+    ratings = Rating.query.filter_by(client_id=client_id, photographer_id=photographer.id).all()
+    if not ratings:
+        return 5
+    
+    avg_rating = sum(r.rating for r in ratings) / len(ratings)
+    bonus = (avg_rating / 5.0) * 20
+    
+    if len(previous_bookings) > 1:
+        bonus += min(len(previous_bookings) * 2, 10)
+    
+    return min(bonus, 30)
+
+
+def calculate_photo_delivery_speed_score(photographer):
+    """Calculate delivery speed score (0-100)"""
+    completed_bookings = Booking.query.filter_by(
+        photographer_id=photographer.id, status=BOOKING_STATUS_COMPLETED
+    ).all()
+    
+    if not completed_bookings:
+        return 50
+    
+    delivery_times = []
+    for booking in completed_bookings:
+        photos = Photo.query.filter_by(
+            booking_id=booking.id, photographer_id=photographer.id
+        ).order_by(Photo.uploaded_at.asc()).all()
+        
+        if photos:
+            upload = photos[0].uploaded_at.replace(tzinfo=None) if photos[0].uploaded_at.tzinfo else photos[0].uploaded_at
+            book_date = booking.booking_date_and_time.replace(tzinfo=None) if booking.booking_date_and_time.tzinfo else booking.booking_date_and_time
+            days = (upload - book_date).days
+            if days >= 0:
+                delivery_times.append(days)
+    
+    if not delivery_times:
+        return 50
+    
+    avg_days = sum(delivery_times) / len(delivery_times)
+    
+    if avg_days <= 0: return 100
+    elif avg_days <= 2: return 90
+    elif avg_days <= 5: return 80
+    elif avg_days <= 7: return 70
+    elif avg_days <= 14: return 60
+    elif avg_days <= 30: return 40
+    else: return 20
 
 
 def calculate_recency_score(photographer):
@@ -199,58 +196,34 @@ def calculate_recency_score(photographer):
         return 20  # Inactive
 
 
-def rank_photographers(event_type=None, desired_date=None, limit=None):
-    """
-    Main function to rank all photographers based on 3 key factors:
-    - Style match (40%): Portfolio relevance to event type
-    - Availability (30%): Has slots near desired date
-    - Performance (30%): Completion rate and ratings
-    
-    Args:
-        event_type: String like 'wedding', 'portrait', etc. (optional)
-        desired_date: datetime.date object (optional)
-        limit: Maximum number of photographers to return (optional)
-    
-    Returns:
-        List of tuples: [(photographer, score, breakdown), ...]
-        sorted by score descending
-    """
-    # Get all photographers
+def rank_photographers(event_type=None, desired_date=None, client_id=None, limit=None):
+    """Rank photographers by style (35%), availability (25%), performance (25%), delivery speed (15%) + history bonus"""
     photographers = User.query.filter_by(role=ROLE_PHOTOGRAPHER).all()
+    ranked = []
     
-    ranked_photographers = []
-    
-    for photographer in photographers:
-        # Calculate individual scores (only 3 factors)
-        style_score = calculate_style_match_score(photographer, event_type)
-        availability_score = calculate_availability_score(photographer, desired_date)
-        performance_score = calculate_performance_score(photographer)
-        
-        # Calculate weighted total score (40% + 30% + 30% = 100%)
-        total_score = (
-            style_score * RANKING_WEIGHTS['style_match'] +
-            availability_score * RANKING_WEIGHTS['availability'] +
-            performance_score * RANKING_WEIGHTS['performance']
-        )
-        
-        # Score breakdown for debugging/display
-        breakdown = {
-            'style_match': round(style_score, 1),
-            'availability': round(availability_score, 1),
-            'performance': round(performance_score, 1),
-            'total': round(total_score, 1)
+    for p in photographers:
+        scores = {
+            'style_match': calculate_style_match_score(p, event_type),
+            'availability': calculate_availability_score(p, desired_date),
+            'performance': calculate_performance_score(p),
+            'delivery_speed': calculate_photo_delivery_speed_score(p)
         }
         
-        ranked_photographers.append((photographer, total_score, breakdown))
+        total = scores['style_match'] * 0.35 + scores['availability'] * 0.25 + scores['performance'] * 0.25 + scores['delivery_speed'] * 0.15
+        
+        if client_id:
+            bonus = calculate_client_history_bonus(p, client_id)
+            total += bonus
+            scores['history_bonus'] = round(bonus, 1)
+        else:
+            scores['history_bonus'] = 0
+        
+        scores = {k: round(v, 1) for k, v in scores.items()}
+        scores['total'] = round(total, 1)
+        ranked.append((p, total, scores))
     
-    # Sort by total score descending
-    ranked_photographers.sort(key=lambda x: x[1], reverse=True)
-    
-    # Apply limit if specified
-    if limit:
-        ranked_photographers = ranked_photographers[:limit]
-    
-    return ranked_photographers
+    ranked.sort(key=lambda x: x[1], reverse=True)
+    return ranked[:limit] if limit else ranked
 
 
 def get_photographer_stats(photographer_id):

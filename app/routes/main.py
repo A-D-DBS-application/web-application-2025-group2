@@ -80,6 +80,11 @@ def photographers():
     event_type = request.args.get('event_type')
     desired_date_str = request.args.get('date')
     
+    # Get current user if logged in
+    client_id = None
+    if 'user_id' in session:
+        client_id = session['user_id']
+    
     # Parse desired date if provided
     desired_date = None
     if desired_date_str:
@@ -89,10 +94,11 @@ def photographers():
         except ValueError:
             pass
     
-    # Get ranked photographers using the algorithm
+    # Get ranked photographers using the algorithm (with client_id for personalized ranking)
     ranked_photographers = rank_photographers(
         event_type=event_type,
-        desired_date=desired_date
+        desired_date=desired_date,
+        client_id=client_id
     )
     
     photographer_data = []
