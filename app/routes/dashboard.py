@@ -1,12 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, Response
 from app import db
 from app.models import User, Booking, Photo, PhotographerAvailability, Album, Rating
 from app.constants import BOOKING_STATUS_COMPLETED
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 from werkzeug.utils import secure_filename
 from app.utils.decorators import login_required, photographer_required
 from app.utils.helpers import get_current_user, get_supabase_client
+from icalendar import Calendar, Event
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -694,4 +695,145 @@ def reschedule_booking(booking_id):
                          booking=booking,
                          photographer=photographer,
                          available_dates=available_dates)
+
+@dashboard_bp.route('/booking/<booking_id>/export.ics')
+@login_required
+def export_booking_ical(booking_id):
+    user = get_current_user()
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security check: only client or photographer can export
+    if booking.client_id != user.id and booking.photographer_id != user.id:
+        flash('Access denied.')
+        return redirect(url_for('main.index'))
+    
+    # Get photographer and client details
+    photographer = User.query.get(booking.photographer_id)
+    client = User.query.get(booking.client_id)
+    
+    # Create calendar
+    cal = Calendar()
+    cal.add('prodid', '-//Culex Photography Booking//culex.com//')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
+    cal.add('x-wr-calname', 'Culex Photography Bookings')
+    cal.add('x-wr-timezone', 'Europe/Brussels')
+    
+    # Create event
+    event = Event()
+    event.add('summary', f'📷 {booking.type} Photography Session')
+    event.add('dtstart', booking.booking_date_and_time)
+    event.add('dtend', booking.booking_date_and_time + timedelta(hours=2))
+    event.add('dtstamp', datetime.utcnow())
+    event.add('uid', f'booking-{booking.id}@culex.com')
+    
+    # Add description with details
+    description = f"""Photography Session Details:
+    
+Type: {booking.type}
+Photographer: {photographer.name} ({photographer.email})
+Client: {client.name} ({client.email})
+Status: {booking.status.capitalize()}
+
+{booking.description if booking.description else ''}
+
+Booked via Culex Photography Platform
+"""
+    event.add('description', description)
+    
+    # Add location if available
+    event.add('location', 'To be determined')
+    
+    # Add organizer and attendee
+    event.add('organizer', f'mailto:{photographer.email}')
+    event.add('attendee', f'mailto:{client.email}')
+    
+    # Add alarm (reminder 24 hours before)
+    from icalendar import Alarm
+    alarm = Alarm()
+    alarm.add('action', 'DISPLAY')
+    alarm.add('description', f'Photography session reminder: {booking.type}')
+    alarm.add('trigger', timedelta(hours=-24))
+    event.add_component(alarm)
+    
+    # Add 1 hour reminder
+    alarm2 = Alarm()
+    alarm2.add('action', 'DISPLAY')
+    alarm2.add('description', f'Photography session starts in 1 hour')
+    alarm2.add('trigger', timedelta(hours=-1))
+    event.add_component(alarm2)
+    
+    cal.add_component(event)
+    
+    # Return as downloadable file
+    return Response(
+        cal.to_ical(),
+        mimetype='text/calendar',
+        headers={
+            'Content-Disposition': f'attachment; filename=photography-booking-{booking.id}.ics'
+        }
+    )
+
+@dashboard_bp.route('/photographer/export-calendar.ics')
+@photographer_required
+def export_photographer_calendar():
+    user = get_current_user()
+    
+    # Get all upcoming bookings for this photographer
+    upcoming_bookings = Booking.query.filter(
+        Booking.photographer_id == user.id,
+        Booking.booking_date_and_time >= datetime.now(),
+        Booking.status.in_(['pending', 'confirmed'])
+    ).order_by(Booking.booking_date_and_time).all()
+    
+    # Create calendar
+    cal = Calendar()
+    cal.add('prodid', '-//Culex Photography Bookings//culex.com//')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
+    cal.add('x-wr-calname', f'{user.name} - Photography Bookings')
+    cal.add('x-wr-timezone', 'Europe/Brussels')
+    
+    # Add each booking as an event
+    for booking in upcoming_bookings:
+        client = User.query.get(booking.client_id)
+        
+        event = Event()
+        event.add('summary', f'📷 {booking.type} - {client.name}')
+        event.add('dtstart', booking.booking_date_and_time)
+        event.add('dtend', booking.booking_date_and_time + timedelta(hours=2))
+        event.add('dtstamp', datetime.utcnow())
+        event.add('uid', f'booking-{booking.id}@culex.com')
+        
+        description = f"""Client: {client.name}
+Email: {client.email}
+Type: {booking.type}
+Status: {booking.status.capitalize()}
+
+{booking.description if booking.description else ''}
+"""
+        event.add('description', description)
+        event.add('location', 'To be determined')
+        event.add('organizer', f'mailto:{user.email}')
+        event.add('attendee', f'mailto:{client.email}')
+        
+        # Add reminder
+        from icalendar import Alarm
+        alarm = Alarm()
+        alarm.add('action', 'DISPLAY')
+        alarm.add('description', f'Session with {client.name}')
+        alarm.add('trigger', timedelta(hours=-24))
+        event.add_component(alarm)
+        
+        cal.add_component(event)
+    
+    return Response(
+        cal.to_ical(),
+        mimetype='text/calendar',
+        headers={
+            'Content-Disposition': f'attachment; filename={user.username}-bookings.ics'
+        }
+    )
 

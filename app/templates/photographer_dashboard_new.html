@@ -11,6 +11,11 @@
     <div class="bookings-container">
         <h1 class="bookings-title">Client Bookings</h1>
         <p class="bookings-subtitle">View and manage bookings from your clients</p>
+        <div style="margin-top: 1.5rem;">
+            <a href="{{ url_for('dashboard.export_photographer_calendar') }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                📅 Export All to Calendar
+            </a>
+        </div>
     </div>
 </div>
 
