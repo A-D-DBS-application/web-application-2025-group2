@@ -7,6 +7,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from app.utils.decorators import login_required, photographer_required
 from app.utils.helpers import get_current_user, get_supabase_client
+from app.utils.dashboard_helpers import get_booking_with_security_check, enrich_bookings_with_details, free_availability_slot
 from icalendar import Calendar, Event
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -40,81 +41,42 @@ def add_availability():
 @photographer_required
 def photographer_dashboard():
     user = get_current_user()
-    
-    # Get bookings from clients (where this user is the photographer)
-    # Order by status (pending first) then by date
     bookings = Booking.query.filter_by(photographer_id=user.id).order_by(
-        db.case(
-            (Booking.status == 'pending', 1),
-            (Booking.status == 'confirmed', 2),
-            (Booking.status == 'completed', 3),
-            (Booking.status == 'cancelled', 4),
-            else_=5
-        ),
+        db.case((Booking.status == 'pending', 1), (Booking.status == 'confirmed', 2), 
+                (Booking.status == 'completed', 3), (Booking.status == 'cancelled', 4), else_=5),
         Booking.booking_date_and_time.desc()
     ).all()
-    
-    # Attach client objects and photo counts to bookings
-    for booking in bookings:
-        booking.client = User.query.get(booking.client_id)
-        booking.photo_count = Photo.query.filter_by(booking_id=booking.id).count()
-    
-    return render_template('photographer_dashboard_new.html',
-                         user=user,
-                         bookings=bookings)
+    enrich_bookings_with_details(bookings, for_photographer=True)
+    return render_template('photographer_dashboard_new.html', user=user, bookings=bookings)
 
 @dashboard_bp.route('/dashboard/photographer/complete-booking/<booking_id>', methods=['POST'])
+@photographer_required
 def complete_booking(booking_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied.')
-        return redirect(url_for('main.index'))
-    
-    booking = Booking.query.get_or_404(booking_id)
-    
-    # Security check: only the photographer can complete their booking
-    if booking.photographer_id != user.id:
-        flash('You can only complete your own bookings.')
-        return redirect(url_for('dashboard.photographer_dashboard'))
+    user = get_current_user()
+    booking, error = get_booking_with_security_check(booking_id, user, 'photographer')
+    if error:
+        return error
     
     booking.status = 'completed'
     db.session.commit()
-    
     flash('Booking marked as completed.')
     return redirect(url_for('dashboard.photographer_dashboard'))
 
 @dashboard_bp.route('/photographer/add-availability', methods=['POST'])
+@photographer_required
 def add_availability_slot():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user = get_current_user()
+    date, start_time, end_time = request.form.get('date'), request.form.get('start_time'), request.form.get('end_time')
     
-    user = User.query.get(session['user_id'])
-    if not user or user.role != 'photographer':
-        flash('Access denied. Photographers only.')
-        return redirect(url_for('main.index'))
-    
-    date = request.form.get('date')
-    start_time = request.form.get('start_time')
-    end_time = request.form.get('end_time')
-    
-    if not date or not start_time or not end_time:
+    if not all([date, start_time, end_time]):
         flash('All fields are required.')
         return redirect(url_for('dashboard.photographer_dashboard'))
     
-    # Create availability slot
-    new_slot = PhotographerAvailability(
-        photographer_id=user.id,
-        available_date=datetime.strptime(date, '%Y-%m-%d').date(),
-        start_time=start_time,
-        end_time=end_time,
-        is_available=True
-    )
-    db.session.add(new_slot)
+    db.session.add(PhotographerAvailability(
+        photographer_id=user.id, available_date=datetime.strptime(date, '%Y-%m-%d').date(),
+        start_time=start_time, end_time=end_time, is_available=True
+    ))
     db.session.commit()
-    
     flash('Availability slot added successfully!')
     return redirect(url_for('dashboard.photographer_dashboard'))
 
@@ -186,51 +148,29 @@ def client_dashboard():
                          photos_by_photographer=photos_by_photographer)
 
 @dashboard_bp.route('/portfolio/manage')
+@photographer_required
 def manage_portfolio():
-    """Photographer's portfolio management interface"""
-    if 'user_id' not in session:
-        flash('Please login to access this page', 'danger')
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if user.role != 'photographer':
-        flash('Only photographers can manage portfolios', 'danger')
-        return redirect(url_for('main.index'))
-    
+    user = get_current_user()
     albums = Album.query.filter_by(photographer_id=user.id).order_by(Album.created_at.desc()).all()
     return render_template('manage_portfolio.html', user=user, albums=albums)
 
 
 @dashboard_bp.route('/portfolio/album/create', methods=['POST'])
+@photographer_required
 def create_album():
-    """Create a new album/category"""
-    if 'user_id' not in session:
-        flash('Please login first', 'danger')
-        return redirect(url_for('main.login'))
-    
-    user = User.query.get(session['user_id'])
-    if user.role != 'photographer':
-        flash('Only photographers can create albums', 'danger')
-        return redirect(url_for('main.index'))
-    
+    user = get_current_user()
     name = request.form.get('name', '').strip()
-    description = request.form.get('description', '').strip()
     
     if not name:
         flash('Album name is required', 'danger')
         return redirect(url_for('dashboard.manage_portfolio'))
     
-    new_album = Album(
-        photographer_id=user.id,
-        name=name,
-        description=description if description else None
-    )
-    
+    new_album = Album(photographer_id=user.id, name=name, 
+                     description=request.form.get('description', '').strip() or None)
     db.session.add(new_album)
     db.session.commit()
     
     flash(f'Album "{name}" created! Now add your photos.', 'success')
-    # Redirect directly to upload page for the new album
     return redirect(url_for('dashboard.upload_to_album', album_id=new_album.id))
 
 

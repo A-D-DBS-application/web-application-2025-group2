@@ -8,62 +8,43 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    # Get photographers from database
     photographers = User.query.filter_by(role='photographer').all()
-    photographer_photos = {}
-    for photographer in photographers:
-        photos = Photo.query.filter_by(photographer_id=photographer.id).all()
-        photographer_photos[photographer.id] = photos
+    photographer_photos = {p.id: Photo.query.filter_by(photographer_id=p.id).all() for p in photographers}
     return render_template('index.html', photographers=photographers, photographer_photos=photographer_photos)
 
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    error = None
     if request.method == 'POST':
-        name = request.form['name'].strip()
-        email = request.form['email'].strip().lower()
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-
-        if not name or not email or not password or not confirm_password:
-            error = "All fields are required."
-        elif password != confirm_password:
-            error = "Passwords do not match."
-        elif db.session.query(User).filter_by(email=email).first():
-            error = "Email already registered."
-        else:
-            hashed_pw = generate_password_hash(password)
-            new_user = User(
-                username=email,  # Use email as username
-                name=name,
-                email=email,
-                password_hash=hashed_pw,
-                role='user'
-            )
-            db.session.add(new_user)
-            db.session.commit()
-            return redirect(url_for('main.login'))
-
-    return render_template('register.html', error=error)
+        name, email, password, confirm = (request.form.get(f).strip() if f in ['name', 'email'] else request.form.get(f) 
+                                          for f in ['name', 'email', 'password', 'confirm_password'])
+        email = email.lower() if email else None
+        
+        if not all([name, email, password, confirm]):
+            return render_template('register.html', error="All fields are required.")
+        if password != confirm:
+            return render_template('register.html', error="Passwords do not match.")
+        if User.query.filter_by(email=email).first():
+            return render_template('register.html', error="Email already registered.")
+        
+        db.session.add(User(username=email, name=name, email=email, 
+                           password_hash=generate_password_hash(password), role='user'))
+        db.session.commit()
+        return redirect(url_for('main.login'))
+    
+    return render_template('register.html', error=None)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None
     if request.method == 'POST':
         email = request.form['email'].strip().lower()
-        password = request.form['password']
-
         user = User.query.filter_by(email=email).first()
         
-        if user and check_password_hash(user.password_hash, password):
-            session['user_id'] = user.id
-            session['user_name'] = user.name
-            session['user_role'] = user.role
+        if user and check_password_hash(user.password_hash, request.form['password']):
+            session.update({'user_id': user.id, 'user_name': user.name, 'user_role': user.role})
             return redirect(url_for('main.index'))
-        else:
-            error = "Invalid email or password."
-
-    return render_template('login.html', error=error)
+        return render_template('login.html', error="Invalid email or password.")
+    
+    return render_template('login.html', error=None)
 
 @main_bp.route('/logout', methods=['POST'])
 def logout():
@@ -124,8 +105,8 @@ def photographers():
 @main_bp.route('/photographer/<int:photographer_id>')
 def photographer_profile(photographer_id):
     photographer = User.query.get_or_404(photographer_id)
-    photographer_photos = Photo.query.filter_by(photographer_id=photographer_id).all()
-    return render_template('photographer_profile.html', photographer=photographer, photographer_photos=photographer_photos)
+    return render_template('photographer_profile.html', photographer=photographer, 
+                         photographer_photos=Photo.query.filter_by(photographer_id=photographer_id).all())
 
 @main_bp.route('/api/photographer-slots/<int:photographer_id>')
 def get_photographer_slots(photographer_id):
