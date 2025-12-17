@@ -41,7 +41,17 @@ def photographer_dashboard():
     user = get_current_user()
     
     # Get bookings from clients (where this user is the photographer)
-    bookings = Booking.query.filter_by(photographer_id=user.id).order_by(Booking.booking_date_and_time.desc()).all()
+    # Order by status (pending first) then by date
+    bookings = Booking.query.filter_by(photographer_id=user.id).order_by(
+        db.case(
+            (Booking.status == 'pending', 1),
+            (Booking.status == 'confirmed', 2),
+            (Booking.status == 'completed', 3),
+            (Booking.status == 'cancelled', 4),
+            else_=5
+        ),
+        Booking.booking_date_and_time.desc()
+    ).all()
     
     # Attach client objects and photo counts to bookings
     for booking in bookings:
@@ -608,4 +618,80 @@ def delete_booking(booking_id):
     if user.role == 'photographer':
         return redirect(url_for('dashboard.photographer_dashboard'))
     return redirect(url_for('dashboard.client_dashboard'))
+
+@dashboard_bp.route('/booking/reschedule/<booking_id>', methods=['GET', 'POST'])
+@login_required
+def reschedule_booking(booking_id):
+    user = get_current_user()
+    
+    # Get the booking
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Security check: only the client can reschedule their booking
+    if booking.client_id != user.id:
+        flash('You can only reschedule your own bookings.')
+        return redirect(url_for('dashboard.client_dashboard'))
+    
+    # Get the photographer
+    photographer = User.query.get(booking.photographer_id)
+    
+    if request.method == 'POST':
+        new_date_str = request.form.get('new_date')
+        
+        if not new_date_str:
+            flash('Please select a new date.')
+            return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
+        
+        try:
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d')
+            
+            # Check if the new date is available
+            availability = PhotographerAvailability.query.filter_by(
+                photographer_id=booking.photographer_id,
+                available_date=new_date.date(),
+                is_available=True
+            ).first()
+            
+            if not availability:
+                flash('The selected date is not available. Please choose another date.')
+                return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
+            
+            # Free up the old availability slot
+            if booking.booking_date_and_time:
+                old_slot = PhotographerAvailability.query.filter_by(
+                    photographer_id=booking.photographer_id,
+                    available_date=booking.booking_date_and_time.date(),
+                    is_available=False
+                ).first()
+                
+                if old_slot:
+                    old_slot.is_available = True
+            
+            # Book the new slot
+            availability.is_available = False
+            
+            # Update booking date
+            booking.booking_date_and_time = new_date
+            booking.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            flash('Booking rescheduled successfully!')
+            return redirect(url_for('dashboard.client_dashboard'))
+            
+        except ValueError:
+            flash('Invalid date format.')
+            return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
+    
+    # GET request - show available dates
+    # Get photographer's available dates
+    available_dates = PhotographerAvailability.query.filter_by(
+        photographer_id=booking.photographer_id,
+        is_available=True
+    ).order_by(PhotographerAvailability.available_date).all()
+    
+    return render_template('reschedule_booking.html',
+                         booking=booking,
+                         photographer=photographer,
+                         available_dates=available_dates)
 

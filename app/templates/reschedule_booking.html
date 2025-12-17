@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Reschedule Booking - Culex{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
+<style>
+    .reschedule-container {
+        max-width: 800px;
+        margin: 3rem auto;
+        padding: 0 2rem;
+    }
+
+    .reschedule-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1E293B;
+        margin-bottom: 0.5rem;
+    }
+
+    .reschedule-subtitle {
+        color: #64748B;
+        font-size: 1.125rem;
+        margin-bottom: 2rem;
+    }
+
+    .booking-info-card {
+        background: #F8FAFC;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .photographer-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .photographer-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+    }
+
+    .photographer-info h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.25rem;
+    }
+
+    .photographer-info p {
+        color: #64748B;
+        font-size: 0.875rem;
+    }
+
+    .booking-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #E2E8F0;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .detail-label {
+        font-size: 0.875rem;
+        color: #64748B;
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        color: #1E293B;
+        font-weight: 600;
+    }
+
+    .reschedule-form {
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 1rem;
+    }
+
+    .available-dates {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .date-option {
+        position: relative;
+    }
+
+    .date-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .date-option label {
+        display: block;
+        padding: 1rem;
+        border: 2px solid #E2E8F0;
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #FFFFFF;
+    }
+
+    .date-option input[type="radio"]:checked + label {
+        border-color: #2563EB;
+        background: #EFF6FF;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .date-option label:hover {
+        border-color: #2563EB;
+        background: #F8FAFC;
+    }
+
+    .date-day {
+        font-size: 0.875rem;
+        color: #64748B;
+        margin-bottom: 0.25rem;
+    }
+
+    .date-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1E293B;
+    }
+
+    .date-month {
+        font-size: 0.875rem;
+        color: #64748B;
+        margin-top: 0.25rem;
+    }
+
+    .no-dates-message {
+        background: #FEF3C7;
+        color: #92400E;
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        border-left: 4px solid #F59E0B;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-reschedule {
+        flex: 1;
+        background: #2563EB;
+        color: white;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-reschedule:hover {
+        background: #1E40AF;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-reschedule:disabled {
+        background: #94A3B8;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-cancel {
+        padding: 1rem 2rem;
+        border: 2px solid #E2E8F0;
+        background: transparent;
+        color: #64748B;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        border-color: #94A3B8;
+        background: #F8FAFC;
+    }
+
+    /* Dark mode */
+    body.dark-mode .reschedule-title {
+        color: #f1f1f1;
+    }
+
+    body.dark-mode .reschedule-subtitle,
+    body.dark-mode .detail-label,
+    body.dark-mode .date-day,
+    body.dark-mode .date-month {
+        color: #94a3b8;
+    }
+
+    body.dark-mode .booking-info-card {
+        background: #1f1f1f;
+    }
+
+    body.dark-mode .photographer-info h3,
+    body.dark-mode .detail-value,
+    body.dark-mode .date-number,
+    body.dark-mode .form-section-title {
+        color: #f1f1f1;
+    }
+
+    body.dark-mode .reschedule-form {
+        background: #1f1f1f;
+    }
+
+    body.dark-mode .date-option label {
+        background: #2a2a2a;
+        border-color: #404040;
+    }
+
+    body.dark-mode .date-option input[type="radio"]:checked + label {
+        background: #1e3a8a;
+        border-color: #3b82f6;
+    }
+
+    body.dark-mode .date-option label:hover {
+        background: #333;
+        border-color: #3b82f6;
+    }
+
+    body.dark-mode .booking-details {
+        border-top-color: #404040;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reschedule-container">
+    <h1 class="reschedule-title">Reschedule Booking</h1>
+    <p class="reschedule-subtitle">Select a new date for your photography session</p>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="error-message">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="booking-info-card">
+        <div class="photographer-header">
+            <div class="photographer-avatar">📷</div>
+            <div class="photographer-info">
+                <h3>{{ photographer.name }}</h3>
+                <p>@{{ photographer.username }}</p>
+            </div>
+        </div>
+
+        <div class="booking-details">
+            <div class="detail-item">
+                <span class="detail-label">Current Date</span>
+                <span class="detail-value">{{ booking.booking_date_and_time.strftime('%B %d, %Y') }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Session Type</span>
+                <span class="detail-value">{{ booking.type }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value" style="color: #F59E0B;">{{ booking.status.capitalize() }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="reschedule-form">
+        <h2 class="form-section-title">Available Dates</h2>
+        
+        {% if available_dates %}
+        <form method="POST">
+            <div class="available-dates">
+                {% for date in available_dates %}
+                <div class="date-option">
+                    <input type="radio" 
+                           id="date_{{ loop.index }}" 
+                           name="new_date" 
+                           value="{{ date.available_date.strftime('%Y-%m-%d') }}"
+                           required>
+                    <label for="date_{{ loop.index }}">
+                        <div class="date-day">{{ date.available_date.strftime('%A') }}</div>
+                        <div class="date-number">{{ date.available_date.strftime('%d') }}</div>
+                        <div class="date-month">{{ date.available_date.strftime('%B') }}</div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('dashboard.client_dashboard') }}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-reschedule">Confirm Reschedule</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="no-dates-message">
+            <p><strong>No available dates</strong></p>
+            <p>This photographer has no available dates at the moment. Please check back later or contact them directly.</p>
+        </div>
+        <div class="form-actions">
+            <a href="{{ url_for('dashboard.client_dashboard') }}" class="btn-cancel" style="flex: 1; text-align: center;">Back to Dashboard</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
