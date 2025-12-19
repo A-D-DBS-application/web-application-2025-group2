@@ -24,26 +24,26 @@ Culex focuses on usability, transparency, and smooth collaboration between creat
 
 ---
 
-##  Demo
+## 🎥 Demo
 
 - **Video Demo of the App:**  
   https://youtu.be/1N7cYVI5iBM
 
 ---
 
-##  Feedback Sessions
+## Feedback Sessions
 
-- Sprint1: https://youtu.be/-wnqEXZdYgQ
-- Sprint2: https://youtu.be/irD998umEpM
-- Sprint3: https://youtu.be/g_Iz2oM2090
+- **Sprint 1:** https://youtu.be/-wnqEXZdYgQ
+- **Sprint 2:** https://youtu.be/irD998umEpM
+- **Sprint 3:** https://youtu.be/g_Iz2oM2090
 
 ---
 
-##  User Stories / Figma UI Development Screenshots / Presentation
+## Documentation & Resources
 
-- User Stories: Please refer to web-application-2025-group2/ImportantDocuments/User stories group 2 final version.txt
-- Figma UI Development Screenshots: Please refer to web-application-2025-group2/ImportantDocuments/Figma group 2.docx
-- Presentation: Please refer to web-application-2025-group2/ImportantDocuments/PPW_group2_final.pptx
+- **User Stories:** Please refer to `web-application-2025-group2/ImportantDocuments/User stories group 2 final version.txt`
+- **Figma UI Development Screenshots:** Please refer to `web-application-2025-group2/ImportantDocuments/Figma group 2.docx`
+- **Presentation:** Please refer to `web-application-2025-group2/ImportantDocuments/PPW_group2_final.pptx`
 
 ---
 
@@ -96,6 +96,15 @@ This architecture keeps the application simple, cohesive, and easy to deploy, ma
 - **Authentication:** Custom (Flask Sessions & Werkzeug Security)  
 - **File Storage:** Supabase Storage  
 - **Deployment:** Render  
+
+---
+
+## Database & Schema
+
+The application uses a **PostgreSQL** database hosted on **Supabase**.
+
+- **Logical Schema:** A database dump file containing the logical schema and initial data is included in the project repository.
+- **Database Dump:** Please refer to the included SQL dump file to recreate the database structure locally if needed.
 
 ---
 
