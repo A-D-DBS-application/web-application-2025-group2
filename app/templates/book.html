@@ -28,10 +28,18 @@
 
         <form method="POST">
             <label for="photographer">Select Photographer</label>
-            <select id="photographer" name="photographer_id" required onchange="loadPhotographerSlots()">
+            <select id="photographer" name="photographer_id" required onchange="loadPhotographerDetails()">
                 <option value="">Choose a photographer...</option>
                 {% for pid, photo in photographers.items() %}
                     <option value="{{ pid }}">{{ photo.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="booking_type">Session Type</label>
+            <select id="booking_type" name="booking_type" required>
+                <option value="">Choose a session type...</option>
+                {% for type in album_types %}
+                    <option value="{{ type }}">{{ type }}</option>
                 {% endfor %}
             </select>
 
@@ -54,17 +62,21 @@
     </div>
 
     <script>
-        function loadPhotographerSlots() {
+        function loadPhotographerDetails() {
             const photographerId = document.getElementById('photographer').value;
             const slotSelect = document.getElementById('slot');
+            const typeSelect = document.getElementById('booking_type');
             
             slotSelect.innerHTML = '<option value="">Loading...</option>';
+            typeSelect.innerHTML = '<option value="">Loading...</option>';
             
             if (!photographerId) {
                 slotSelect.innerHTML = '<option value="">Select a photographer first...</option>';
+                typeSelect.innerHTML = '<option value="">Choose a session type...</option>';
                 return;
             }
             
+            // Fetch slots
             fetch(`/api/photographer-slots/${photographerId}`)
                 .then(response => response.json())
                 .then(slots => {
@@ -72,19 +84,40 @@
                     
                     if (slots.length === 0) {
                         slotSelect.innerHTML = '<option value="">No available slots</option>';
-                        return;
+                    } else {
+                        slots.forEach(slot => {
+                            const option = document.createElement('option');
+                            option.value = slot.id;
+                            option.textContent = slot.display;
+                            slotSelect.appendChild(option);
+                        });
                     }
-                    
-                    slots.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = slot.id;
-                        option.textContent = slot.display;
-                        slotSelect.appendChild(option);
-                    });
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     slotSelect.innerHTML = '<option value="">Error loading slots</option>';
+                });
+
+            // Fetch album types
+            fetch(`/api/photographer-album-types/${photographerId}`)
+                .then(response => response.json())
+                .then(types => {
+                    typeSelect.innerHTML = '<option value="">Choose a session type...</option>';
+                    
+                    if (types.length === 0) {
+                        typeSelect.innerHTML = '<option value="">No specific types available</option>';
+                    } else {
+                        types.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type;
+                            option.textContent = type;
+                            typeSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    typeSelect.innerHTML = '<option value="">Error loading types</option>';
                 });
         }
     </script>

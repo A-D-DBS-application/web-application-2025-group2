@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from app.models import User, Photo, PhotographerAvailability, Album
+from app.utils.helpers import get_unique_album_types
 from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
@@ -49,7 +50,7 @@ def login():
 @main_bp.route('/logout', methods=['POST'])
 def logout():
     session.clear()
-    flash('You have been logged out successfully.')
+    flash('You have been logged out successfully.', 'success')
     return redirect(url_for('main.index'))
 
 @main_bp.route('/photographers')
@@ -82,6 +83,9 @@ def photographers():
         client_id=client_id
     )
     
+    # Get normalized album types for the filter dropdown
+    album_types = get_unique_album_types()
+    
     photographer_data = []
     for photographer, score, breakdown in ranked_photographers:
         photos = Photo.query.filter_by(photographer_id=photographer.id).limit(4).all()
@@ -100,13 +104,19 @@ def photographers():
     return render_template('photographers.html', 
                          photographers=photographer_data,
                          event_type=event_type,
-                         desired_date=desired_date_str)
+                         desired_date=desired_date_str,
+                         album_types=album_types)
 
 @main_bp.route('/photographer/<int:photographer_id>')
 def photographer_profile(photographer_id):
     photographer = User.query.get_or_404(photographer_id)
+    specialties = get_unique_album_types(photographer_id)
+    # Explicitly query photos for this photographer
+    photos = Photo.query.filter(Photo.photographer_id == photographer_id).all()
+    
     return render_template('photographer_profile.html', photographer=photographer, 
-                         photographer_photos=Photo.query.filter_by(photographer_id=photographer_id).all())
+                         photographer_photos=photos,
+                         specialties=specialties)
 
 @main_bp.route('/api/photographer-slots/<int:photographer_id>')
 def get_photographer_slots(photographer_id):
@@ -125,6 +135,12 @@ def get_photographer_slots(photographer_id):
         'display': f"{slot.available_date.strftime('%d-%m-%Y')} {slot.start_time}-{slot.end_time}"
     } for slot in slots])
 
+@main_bp.route('/api/photographer-album-types/<int:photographer_id>')
+def get_photographer_album_types(photographer_id):
+    """API endpoint to get available album types for a photographer"""
+    types = get_unique_album_types(photographer_id)
+    return jsonify(types)
+
 @main_bp.route('/portfolio/<int:photographer_id>')
 def view_portfolio(photographer_id):
     """Public portfolio view for clients"""
@@ -134,10 +150,15 @@ def view_portfolio(photographer_id):
         return redirect(url_for('main.index'))
     
     albums = Album.query.filter_by(photographer_id=photographer_id).order_by(Album.created_at.desc()).all()
-    total_photos = sum(len(album.photos) for album in albums)
+    
+    # Get photos not in any album
+    uncategorized_photos = Photo.query.filter_by(photographer_id=photographer_id, album_id=None).order_by(Photo.uploaded_at.desc()).all()
+    
+    total_photos = sum(len(album.photos) for album in albums) + len(uncategorized_photos)
     
     return render_template('portfolio.html', 
                          photographer=photographer, 
                          albums=albums,
+                         uncategorized_photos=uncategorized_photos,
                          total_photos=total_photos)
 

@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app import db
-from app.models import User, Booking, PhotographerAvailability
+from app.models import User, Booking, PhotographerAvailability, Album
+from app.utils.helpers import get_unique_album_types
 from datetime import datetime
 from app.utils.decorators import login_required
 from app.utils.dashboard_helpers import get_booking_with_security_check
@@ -23,8 +24,11 @@ def book():
             return redirect(url_for('bookings.book'))
         
         booking_datetime = datetime.combine(slot.available_date, datetime.strptime(slot.start_time, '%H:%M').time())
+        
+        booking_type = request.form.get('booking_type') or 'session'
+        
         new_booking = Booking(client_id=session['user_id'], photographer_id=int(photographer_id),
-                            booking_date_and_time=booking_datetime, type='session', 
+                            booking_date_and_time=booking_datetime, type=booking_type, 
                             description=request.form.get('notes'))
         
         db.session.add(new_booking)
@@ -34,7 +38,8 @@ def book():
         return redirect(url_for('bookings.booking_confirmation', booking_id=new_booking.id))
     
     photographers = User.query.filter_by(role='photographer').all()
-    return render_template('book.html', photographers={p.id: {'name': p.name, 'id': p.id} for p in photographers})
+    album_types = get_unique_album_types()
+    return render_template('book.html', photographers={p.id: {'name': p.name, 'id': p.id} for p in photographers}, album_types=album_types)
 
 @bookings_bp.route('/booking-confirmation/<booking_id>')
 @login_required

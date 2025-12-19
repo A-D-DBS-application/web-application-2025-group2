@@ -568,40 +568,40 @@ def reschedule_booking(booking_id):
     # Get the booking
     booking = Booking.query.get_or_404(booking_id)
     
-    # Security check: only the client can reschedule their booking
-    if booking.client_id != user.id:
+    # Security check: client OR photographer can reschedule
+    if booking.client_id != user.id and booking.photographer_id != user.id:
         flash('You can only reschedule your own bookings.')
+        if user.role == 'photographer':
+            return redirect(url_for('dashboard.photographer_dashboard'))
         return redirect(url_for('dashboard.client_dashboard'))
     
     # Get the photographer
     photographer = User.query.get(booking.photographer_id)
     
     if request.method == 'POST':
-        new_date_str = request.form.get('new_date')
+        slot_id = request.form.get('slot_id')
         
-        if not new_date_str:
-            flash('Please select a new date.')
+        if not slot_id:
+            flash('Please select a new date and time.')
             return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
         
         try:
-            new_date = datetime.strptime(new_date_str, '%Y-%m-%d')
+            # Get the new slot
+            new_slot = PhotographerAvailability.query.get(slot_id)
             
-            # Check if the new date is available
-            availability = PhotographerAvailability.query.filter_by(
-                photographer_id=booking.photographer_id,
-                available_date=new_date.date(),
-                is_available=True
-            ).first()
-            
-            if not availability:
-                flash('The selected date is not available. Please choose another date.')
+            if not new_slot or not new_slot.is_available:
+                flash('The selected slot is no longer available. Please choose another.')
                 return redirect(url_for('dashboard.reschedule_booking', booking_id=booking_id))
             
             # Free up the old availability slot
             if booking.booking_date_and_time:
+                # Try to find the slot corresponding to the old booking
+                old_time_str = booking.booking_date_and_time.strftime('%H:%M')
+                
                 old_slot = PhotographerAvailability.query.filter_by(
                     photographer_id=booking.photographer_id,
                     available_date=booking.booking_date_and_time.date(),
+                    start_time=old_time_str,
                     is_available=False
                 ).first()
                 
@@ -609,15 +609,22 @@ def reschedule_booking(booking_id):
                     old_slot.is_available = True
             
             # Book the new slot
-            availability.is_available = False
+            new_slot.is_available = False
             
-            # Update booking date
-            booking.booking_date_and_time = new_date
+            # Update booking date and time
+            new_datetime = datetime.combine(
+                new_slot.available_date, 
+                datetime.strptime(new_slot.start_time, '%H:%M').time()
+            )
+            
+            booking.booking_date_and_time = new_datetime
             booking.updated_at = datetime.utcnow()
             
             db.session.commit()
             
             flash('Booking rescheduled successfully!')
+            if user.role == 'photographer':
+                return redirect(url_for('dashboard.photographer_dashboard'))
             return redirect(url_for('dashboard.client_dashboard'))
             
         except ValueError:
@@ -629,7 +636,7 @@ def reschedule_booking(booking_id):
     available_dates = PhotographerAvailability.query.filter_by(
         photographer_id=booking.photographer_id,
         is_available=True
-    ).order_by(PhotographerAvailability.available_date).all()
+    ).order_by(PhotographerAvailability.available_date, PhotographerAvailability.start_time).all()
     
     return render_template('reschedule_booking.html',
                          booking=booking,

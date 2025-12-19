@@ -37,7 +37,7 @@
             </div>
 
             <div class="card portfolio-section">
-                <h2 class="card-title">Portfolio</h2>
+                <h2 class="card-title">Portfolio ({{ photographer_photos|length }})</h2>
                 <div class="portfolio-grid">
                     {% if photographer_photos %}
                         {% for photo in photographer_photos %}
@@ -77,8 +77,10 @@
             <div class="card" style="margin-top: 2rem;">
                 <h3 class="card-title" style="font-size: 1.125rem;">Specialties</h3>
                 <div style="display: flex; flex-wrap: gap; gap: 0.5rem;">
-                    {% for specialty in ['Portrait', 'Wedding', 'Event', 'Product'] %}
+                    {% for specialty in specialties %}
                     <span style="background: #EFF6FF; color: #2563EB; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600;">{{ specialty }}</span>
+                    {% else %}
+                    <span style="color: #666;">No specific specialties listed</span>
                     {% endfor %}
                 </div>
             </div>
@@ -101,10 +103,9 @@
                     <label class="form-label">Session Type</label>
                     <select name="type" class="form-select" required>
                         <option value="">Select a session type</option>
-                        <option value="portrait">Portrait Photography</option>
-                        <option value="wedding">Wedding Photography</option>
-                        <option value="event">Event Photography</option>
-                        <option value="product">Product Photography</option>
+                        {% for specialty in specialties %}
+                        <option value="{{ specialty }}">{{ specialty }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 

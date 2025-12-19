@@ -5,7 +5,7 @@
 }
 body {
     font-family: 'Montserrat', sans-serif;
-    background: #fafbfc;
+    background: hsl(210, 25%, 98%);
 }
 nav {
     display: flex;

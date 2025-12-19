@@ -271,10 +271,15 @@
     <h1 class="reschedule-title">Reschedule Booking</h1>
     <p class="reschedule-subtitle">Select a new date for your photography session</p>
 
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            {% for message in messages %}
-            <div class="error-message">{{ message }}</div>
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 1rem; border-radius: 8px; margin-bottom: 1rem; 
+                {% if category == 'error' or category == 'danger' %}background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5;
+                {% elif category == 'success' %}background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7;
+                {% else %}background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD;{% endif %}">
+                {{ message }}
+            </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
@@ -310,24 +315,31 @@
         {% if available_dates %}
         <form method="POST">
             <div class="available-dates">
-                {% for date in available_dates %}
+                {% for slot in available_dates %}
                 <div class="date-option">
                     <input type="radio" 
-                           id="date_{{ loop.index }}" 
-                           name="new_date" 
-                           value="{{ date.available_date.strftime('%Y-%m-%d') }}"
+                           id="slot_{{ slot.id }}" 
+                           name="slot_id" 
+                           value="{{ slot.id }}"
                            required>
-                    <label for="date_{{ loop.index }}">
-                        <div class="date-day">{{ date.available_date.strftime('%A') }}</div>
-                        <div class="date-number">{{ date.available_date.strftime('%d') }}</div>
-                        <div class="date-month">{{ date.available_date.strftime('%B') }}</div>
+                    <label for="slot_{{ slot.id }}">
+                        <div class="date-day">{{ slot.available_date.strftime('%A') }}</div>
+                        <div class="date-number">{{ slot.available_date.strftime('%d') }}</div>
+                        <div class="date-month">{{ slot.available_date.strftime('%B') }}</div>
+                        <div class="date-time" style="margin-top: 0.5rem; font-size: 0.9rem; color: #2563EB; font-weight: 600;">
+                            {{ slot.start_time }} - {{ slot.end_time }}
+                        </div>
                     </label>
                 </div>
                 {% endfor %}
             </div>
 
             <div class="form-actions">
+                {% if session.get('user_role') == 'photographer' %}
+                <a href="{{ url_for('dashboard.photographer_dashboard') }}" class="btn-cancel">Cancel</a>
+                {% else %}
                 <a href="{{ url_for('dashboard.client_dashboard') }}" class="btn-cancel">Cancel</a>
+                {% endif %}
                 <button type="submit" class="btn-reschedule">Confirm Reschedule</button>
             </div>
         </form>
@@ -337,7 +349,11 @@
             <p>This photographer has no available dates at the moment. Please check back later or contact them directly.</p>
         </div>
         <div class="form-actions">
+            {% if session.get('user_role') == 'photographer' %}
+            <a href="{{ url_for('dashboard.photographer_dashboard') }}" class="btn-cancel" style="flex: 1; text-align: center;">Back to Dashboard</a>
+            {% else %}
             <a href="{{ url_for('dashboard.client_dashboard') }}" class="btn-cancel" style="flex: 1; text-align: center;">Back to Dashboard</a>
+            {% endif %}
         </div>
         {% endif %}
     </div>

@@ -20,6 +20,19 @@
 </div>
 
 <div class="bookings-container" style="padding: 0 2rem;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 1rem; border-radius: 8px; margin-bottom: 1rem; 
+                {% if category == 'error' or category == 'danger' %}background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5;
+                {% elif category == 'success' %}background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7;
+                {% else %}background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD;{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <div class="filter-tabs">
         <button class="filter-tab">All</button>
         <button class="filter-tab active">Upcoming</button>

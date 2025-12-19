@@ -16,11 +16,9 @@
         <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
             <select name="event_type" class="photographer-search-select" style="padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: white; font-size: 1rem;">
                 <option value="" style="color: #333; background: white;">All Event Types</option>
-                <option value="wedding" {% if event_type == 'wedding' %}selected{% endif %} style="color: #333; background: white;">Wedding</option>
-                <option value="portrait" {% if event_type == 'portrait' %}selected{% endif %} style="color: #333; background: white;">Portrait</option>
-                <option value="corporate" {% if event_type == 'corporate' %}selected{% endif %} style="color: #333; background: white;">Corporate</option>
-                <option value="funeral" {% if event_type == 'funeral' %}selected{% endif %} style="color: #333; background: white;">Funeral</option>
-                <option value="birthday" {% if event_type == 'birthday' %}selected{% endif %} style="color: #333; background: white;">Birthday</option>
+                {% for type in album_types %}
+                <option value="{{ type }}" {% if event_type == type %}selected{% endif %} style="color: #333; background: white;">{{ type }}</option>
+                {% endfor %}
             </select>
             
             <input type="date" name="date" value="{{ desired_date or '' }}" 

@@ -25,6 +25,23 @@
         </div>
 
         <div class="albums-section">
+            {% if uncategorized_photos %}
+            <h2>Recent Uploads</h2>
+            <div class="albums-grid" style="margin-bottom: 3rem;">
+                {% for photo in uncategorized_photos %}
+                <div class="album-card">
+                    <div class="album-cover">
+                        <img src="{{ photo.image_url }}" alt="{{ photo.title or 'Photo' }}">
+                    </div>
+                    <div class="album-info">
+                        <div class="album-name">{{ photo.title or 'Untitled' }}</div>
+                        <div class="album-description">Uploaded {{ photo.uploaded_at.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             {% if albums %}
             <h2>Albums</h2>
             <div class="albums-grid">

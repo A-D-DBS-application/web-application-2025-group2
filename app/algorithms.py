@@ -39,7 +39,8 @@ from app.constants import (
     CLIENT_HISTORY_NO_RATING_BONUS,
     DELIVERY_SPEED_THRESHOLDS,
     DELIVERY_SPEED_DEFAULT_SCORE,
-    DELIVERY_SPEED_NO_DATA_SCORE
+    DELIVERY_SPEED_NO_DATA_SCORE,
+    ALBUM_CATEGORIES
 )
 
 
@@ -52,7 +53,19 @@ def calculate_style_match_score(photographer, event_type):
     if not albums:
         return STYLE_MATCH_NO_ALBUMS_SCORE
     
-    keywords = event_type.lower().split()
+    # Expand keywords based on category mapping
+    keywords = set(event_type.lower().split())
+    
+    # If the event_type matches a known category, add its related keywords
+    if event_type in ALBUM_CATEGORIES:
+        keywords.update(ALBUM_CATEGORIES[event_type])
+    
+    # Also check if the event_type matches any category key (case-insensitive)
+    for category, cat_keywords in ALBUM_CATEGORIES.items():
+        if category.lower() == event_type.lower():
+            keywords.update(cat_keywords)
+            break
+            
     matching_albums = sum(1 for a in albums if any(k in f"{a.name} {a.description or ''}".lower() for k in keywords))
     
     if matching_albums == 0:

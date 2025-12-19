@@ -12,6 +12,16 @@
         <h2 class="login-title">Welcome Back</h2>
         <p class="login-subtitle">Login to your {{ app_name }} account</p>
         
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="background: {% if category == 'success' %}#10b981{% elif category == 'error' %}#ef4444{% else %}#3b82f6{% endif %}; color: white; padding: 10px; border-radius: 4px; margin-bottom: 15px; text-align: center;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         {% if error %}
         <div class="error-message">{{ error }}</div>
         {% endif %}

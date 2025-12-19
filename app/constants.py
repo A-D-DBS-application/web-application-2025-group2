@@ -91,3 +91,21 @@ EVENT_TYPES = [
     'event',
     'other'
 ]
+
+# Album Categories Mapping (Display Name -> Keywords)
+ALBUM_CATEGORIES = {
+    'Wedding': ['wedding', 'marriage', 'bridal'],
+    'Corporate': ['corporate', 'business', 'conference', 'office'],
+    'Portrait': ['portrait', 'headshot', 'profile'],
+    'Funeral': ['funeral', 'memorial'],
+    'Birthday': ['birthday', 'party', 'celebration'],
+    'Family': ['family', 'reunion'],
+    'Product': ['product', 'merchandise', 'commercial'],
+    'Fashion': ['fashion', 'editorial', 'model'],
+    'Nature': ['nature', 'landscape', 'wildlife', 'outdoor'],
+    'Sports': ['sport', 'game', 'athletic'],
+    'Maternity': ['maternity', 'pregnancy'],
+    'Newborn': ['newborn', 'baby', 'infant'],
+    'Graduation': ['graduation', 'senior', 'convocation'],
+    'Engagement': ['engagement', 'proposal']
+}

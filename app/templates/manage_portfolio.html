@@ -17,7 +17,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}" style="background: {% if category == 'success' %}#10b981{% else %}#ef4444{% endif %}; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div class="alert alert-{{ category }}" style="background: {% if category == 'success' %}#10b981{% elif category == 'error' %}#ef4444{% else %}#3b82f6{% endif %}; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -35,7 +35,7 @@
                     <label for="description">Description (optional)</label>
                     <textarea id="description" name="description" placeholder="Describe this album category..."></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Create Album</button>
+                <button type="submit" class="portfolio-btn portfolio-btn-primary">Create Album</button>
             </form>
         </div>
 
@@ -69,9 +69,9 @@
                         {% endif %}
                     </div>
                     <div class="album-actions">
-                        <a href="{{ url_for('dashboard.upload_to_album', album_id=album.id) }}" class="btn btn-secondary">Upload Photos</a>
+                        <a href="{{ url_for('dashboard.upload_to_album', album_id=album.id) }}" class="portfolio-btn-upload">Upload Photos</a>
                         <form method="POST" action="{{ url_for('dashboard.delete_album', album_id=album.id) }}" style="display: inline;">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure? This will delete the album and all its photos.')">Delete Album</button>
+                            <button type="submit" class="portfolio-btn-danger" onclick="return confirm('Are you sure? This will delete the album and all its photos.')">Delete Album</button>
                         </form>
                     </div>
                 </div>
