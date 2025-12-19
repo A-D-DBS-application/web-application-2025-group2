@@ -39,6 +39,13 @@ Culex focuses on usability, transparency, and smooth collaboration between creat
 
 ---
 
+##  User Stories / Figma UI Development Screenshots / Presentation
+
+- User Stories: Please refer to web-application-2025-group2/ImportantDocuments/User stories group 2 final version.txt
+- Figma UI Development Screenshots: Please refer to web-application-2025-group2/ImportantDocuments/Figma group 2.docx
+- Presentation: Please refer to web-application-2025-group2/ImportantDocuments/PPW_group2_final.pptx
+
+---
 
 ## Features
 
