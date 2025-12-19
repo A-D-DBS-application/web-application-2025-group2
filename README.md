@@ -1,5 +1,7 @@
 Figma UI : https://www.figma.com/make/hzd5r59uzMhT5X4HQJMppx/Photography-Booking-Platform?p=f&t=bawI7WMjtcMP8HuL-0
-Miro: https://miro.com/app/board/uXjVJuJ6N5E=/?share_link_id=663380797010
+
+Miro Kanban: https://miro.com/app/board/uXjVJuJ6N5E=/?share_link_id=663380797010
+
 How to install the app:
 
 Prerequisites
