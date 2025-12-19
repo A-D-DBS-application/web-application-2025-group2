@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings - De Kodak</title>
+    <title>My Bookings - {{ app_name }}</title>
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bookings.css') }}">
 </head>
 <body>
     <nav>
-        <div class="logo">De Kodak</div>
+        <div class="logo">{{ app_name }}</div>
         <div class="nav-links">
             <a href="{{ url_for('main.index') }}">HOME</a>
             <a href="{{ url_for('bookings.bookings') }}">BOOKINGS</a>

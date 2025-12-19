@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload to {{ album.name }} - De Kodak</title>
+    <title>Upload to {{ album.name }} - {{ app_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/upload_to_album.css') }}">
 </head>
 <body>
     <nav>
-        <div class="logo">DE KODAK</div>
+        <div class="logo">{{ app_name }}</div>
         <div class="nav-links">
             <a href="{{ url_for('main.index') }}">Home</a>
             <a href="{{ url_for('dashboard.photographer_dashboard') }}">Dashboard</a>
