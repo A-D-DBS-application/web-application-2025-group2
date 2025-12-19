@@ -24,12 +24,21 @@ Culex focuses on usability, transparency, and smooth collaboration between creat
 
 ---
 
-## 🎥 Demo
+##  Demo
 
 - **Video Demo of the App:**  
   https://youtu.be/1N7cYVI5iBM
 
 ---
+
+##  Feedback Sessions
+
+- Sprint1: https://youtu.be/-wnqEXZdYgQ
+- Sprint2: https://youtu.be/irD998umEpM
+- Sprint3: https://youtu.be/g_Iz2oM2090
+
+---
+
 
 ## Features
 
