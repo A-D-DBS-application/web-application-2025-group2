@@ -1,4 +1,3 @@
-<img width="2051" height="1120" alt="image" src="https://github.com/user-attachments/assets/ff0fee84-b186-4bbd-8ceb-b72165fe7537" />UI Prototype: https://www.figma.com/make/hzd5r59uzMhT5X4HQJMppx/Photography-Booking-Platform?p=f&t=mBg7LKyR0iro1diF-0
 
 How to install the app:
 
