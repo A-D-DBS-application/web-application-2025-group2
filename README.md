@@ -1,4 +1,4 @@
-UI Prototype: https://www.figma.com/make/hzd5r59uzMhT5X4HQJMppx/Photography-Booking-Platform?p=f&t=mBg7LKyR0iro1diF-0
+<img width="2051" height="1120" alt="image" src="https://github.com/user-attachments/assets/ff0fee84-b186-4bbd-8ceb-b72165fe7537" />UI Prototype: https://www.figma.com/make/hzd5r59uzMhT5X4HQJMppx/Photography-Booking-Platform?p=f&t=mBg7LKyR0iro1diF-0
 
 How to install the app:
 
@@ -37,6 +37,9 @@ You should see output indicating the server is running, typically on port 5000.
 5. Access the App
 Open your web browser and navigate to:
 http://localhost:5000
+
+
+Video Demo of App: https://youtu.be/1N7cYVI5iBM
 
 You can now register a new account, log in, and explore the features (booking
 
