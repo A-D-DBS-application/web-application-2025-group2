@@ -24,7 +24,7 @@ Culex focuses on usability, transparency, and smooth collaboration between creat
 
 ---
 
-## 🎥 Demo
+## Demo
 
 - **Video Demo of the App:**  
   https://youtu.be/1N7cYVI5iBM
